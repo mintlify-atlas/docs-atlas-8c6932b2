@@ -1,0 +1,777 @@
+---
+title: 'Skills'
+description: 'Manage skill categories and individual skills'
+---
+
+## List All Skill Categories
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/skill-categories
+```
+
+Retrieve all skill categories with their associated skills for the authenticated user.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of skill categories
+  
+  <ResponseField name="id" type="long">
+    Skill category ID
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Category name
+  </ResponseField>
+  
+  <ResponseField name="sortOrder" type="integer">
+    Display order for sorting
+  </ResponseField>
+  
+  <ResponseField name="skills" type="array">
+    Array of skills in this category
+    
+    <ResponseField name="id" type="long">
+      Skill ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Skill name
+    </ResponseField>
+    
+    <ResponseField name="globalSkillId" type="long">
+      Reference to global skill database
+    </ResponseField>
+    
+    <ResponseField name="level" type="integer">
+      Proficiency level (0-100)
+    </ResponseField>
+    
+    <ResponseField name="icon" type="string">
+      Icon identifier for the skill
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/skill-categories \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Categorías de skills obtenidas",
+  "data": [
+    {
+      "id": 1,
+      "name": "Programming Languages",
+      "sortOrder": 1,
+      "skills": [
+        {
+          "id": 10,
+          "name": "Java",
+          "globalSkillId": 100,
+          "level": 90,
+          "icon": "java-icon"
+        },
+        {
+          "id": 11,
+          "name": "JavaScript",
+          "globalSkillId": 101,
+          "level": 85,
+          "icon": "js-icon"
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Get Skill Category by ID
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/skill-categories/{categoryId}
+```
+
+Retrieve a specific skill category with its skills.
+
+### Path Parameters
+
+<ParamField path="categoryId" type="long" required>
+  Skill category ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Skill category details (same structure as list items)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/skill-categories/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Categoría de skill obtenida",
+  "data": {
+    "id": 1,
+    "name": "Programming Languages",
+    "sortOrder": 1,
+    "skills": [
+      {
+        "id": 10,
+        "name": "Java",
+        "globalSkillId": 100,
+        "level": 90,
+        "icon": "java-icon"
+      }
+    ]
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Search Global Skills
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/skill-categories/search?query={searchTerm}
+```
+
+Search for skills in the global skills database.
+
+### Query Parameters
+
+<ParamField query="query" type="string" required>
+  Search term for finding skills
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of matching global skills
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.portfoliohub.com/api/me/skill-categories/search?query=java" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Resultados de búsqueda",
+  "data": [
+    {
+      "id": 100,
+      "name": "Java",
+      "icon": "java-icon"
+    },
+    {
+      "id": 101,
+      "name": "JavaScript",
+      "icon": "js-icon"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Batch Create Skill Categories
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/skill-categories/batch
+```
+
+Create multiple skill categories at once.
+
+### Request Body
+
+<ParamField body="categories" type="array" required>
+  Array of category creation requests
+  
+  <ParamField body="name" type="string" required>
+    Category name (max 80 characters)
+  </ParamField>
+  
+  <ParamField body="sortOrder" type="integer" required>
+    Display order for sorting
+  </ParamField>
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of created skill categories
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/skill-categories/batch \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "name": "Programming Languages",
+      "sortOrder": 1
+    },
+    {
+      "name": "Frameworks",
+      "sortOrder": 2
+    }
+  ]'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Categorías creadas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "name": "Programming Languages",
+      "sortOrder": 1,
+      "skills": []
+    },
+    {
+      "id": 2,
+      "name": "Frameworks",
+      "sortOrder": 2,
+      "skills": []
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Batch Update Skill Categories
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/skill-categories/batch
+```
+
+Update multiple skill categories at once.
+
+### Request Body
+
+<ParamField body="categories" type="array" required>
+  Array of category update requests
+  
+  <ParamField body="id" type="long" required>
+    Category ID to update
+  </ParamField>
+  
+  <ParamField body="name" type="string" required>
+    Category name (max 80 characters)
+  </ParamField>
+  
+  <ParamField body="sortOrder" type="integer" required>
+    Display order for sorting
+  </ParamField>
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of updated skill categories
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/skill-categories/batch \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "id": 1,
+      "name": "Core Programming Languages",
+      "sortOrder": 1
+    },
+    {
+      "id": 2,
+      "name": "Web Frameworks",
+      "sortOrder": 2
+    }
+  ]'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Categorías actualizadas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "name": "Core Programming Languages",
+      "sortOrder": 1,
+      "skills": []
+    },
+    {
+      "id": 2,
+      "name": "Web Frameworks",
+      "sortOrder": 2,
+      "skills": []
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Batch Delete Skill Categories
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/skill-categories/batch
+```
+
+Delete multiple skill categories at once.
+
+### Request Body
+
+<ParamField body="ids" type="array" required>
+  Array of category IDs to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/skill-categories/batch \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ids": [1, 2, 3]
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Categorías eliminadas exitosamente",
+  "data": null
+}
+```
+</CodeGroup>
+
+---
+
+## Get Skills for Category
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/skill-categories/{categoryId}/skills
+```
+
+Retrieve all skills within a specific category.
+
+### Path Parameters
+
+<ParamField path="categoryId" type="long" required>
+  Skill category ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of skills in the category
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/skill-categories/1/skills \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Skills obtenidos para la categoría",
+  "data": [
+    {
+      "id": 10,
+      "name": "Java",
+      "globalSkillId": 100,
+      "level": 90,
+      "icon": "java-icon"
+    },
+    {
+      "id": 11,
+      "name": "Python",
+      "globalSkillId": 102,
+      "level": 85,
+      "icon": "python-icon"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Batch Create Skills
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/skill-categories/{categoryId}/skills/batch
+```
+
+Create multiple skills within a category at once.
+
+### Path Parameters
+
+<ParamField path="categoryId" type="long" required>
+  Skill category ID to add skills to
+</ParamField>
+
+### Request Body
+
+<ParamField body="skills" type="array" required>
+  Array of skill creation requests
+  
+  <ParamField body="name" type="string" required>
+    Skill name (max 80 characters)
+  </ParamField>
+  
+  <ParamField body="level" type="integer" required>
+    Proficiency level (0-100)
+  </ParamField>
+  
+  <ParamField body="icon" type="string">
+    Icon identifier (max 255 characters)
+  </ParamField>
+  
+  <ParamField body="sortOrder" type="integer" required>
+    Display order for sorting
+  </ParamField>
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of created skills
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/skill-categories/1/skills/batch \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "name": "Java",
+      "level": 90,
+      "icon": "java-icon",
+      "sortOrder": 1
+    },
+    {
+      "name": "Python",
+      "level": 85,
+      "icon": "python-icon",
+      "sortOrder": 2
+    }
+  ]'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Skills creados exitosamente",
+  "data": [
+    {
+      "id": 10,
+      "name": "Java",
+      "globalSkillId": null,
+      "level": 90,
+      "icon": "java-icon"
+    },
+    {
+      "id": 11,
+      "name": "Python",
+      "globalSkillId": null,
+      "level": 85,
+      "icon": "python-icon"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Batch Update Skills
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/skill-categories/{categoryId}/skills/batch
+```
+
+Update multiple skills within a category at once.
+
+### Path Parameters
+
+<ParamField path="categoryId" type="long" required>
+  Skill category ID containing the skills
+</ParamField>
+
+### Request Body
+
+<ParamField body="skills" type="array" required>
+  Array of skill update requests
+  
+  <ParamField body="id" type="long" required>
+    Skill ID to update
+  </ParamField>
+  
+  <ParamField body="name" type="string" required>
+    Skill name (max 80 characters)
+  </ParamField>
+  
+  <ParamField body="level" type="integer" required>
+    Proficiency level (0-100)
+  </ParamField>
+  
+  <ParamField body="icon" type="string">
+    Icon identifier (max 255 characters)
+  </ParamField>
+  
+  <ParamField body="sortOrder" type="integer" required>
+    Display order for sorting
+  </ParamField>
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of updated skills
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/skill-categories/1/skills/batch \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "id": 10,
+      "name": "Java",
+      "level": 95,
+      "icon": "java-icon-v2",
+      "sortOrder": 1
+    },
+    {
+      "id": 11,
+      "name": "Python",
+      "level": 90,
+      "icon": "python-icon-v2",
+      "sortOrder": 2
+    }
+  ]'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Skills actualizados exitosamente",
+  "data": [
+    {
+      "id": 10,
+      "name": "Java",
+      "globalSkillId": 100,
+      "level": 95,
+      "icon": "java-icon-v2"
+    },
+    {
+      "id": 11,
+      "name": "Python",
+      "globalSkillId": 102,
+      "level": 90,
+      "icon": "python-icon-v2"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Batch Delete Skills
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/skill-categories/{categoryId}/skills/batch
+```
+
+Delete multiple skills from a category at once.
+
+### Path Parameters
+
+<ParamField path="categoryId" type="long" required>
+  Skill category ID containing the skills
+</ParamField>
+
+### Request Body
+
+<ParamField body="ids" type="array" required>
+  Array of skill IDs to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/skill-categories/1/skills/batch \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ids": [10, 11, 12]
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Skills eliminados exitosamente",
+  "data": null
+}
+```
+</CodeGroup>

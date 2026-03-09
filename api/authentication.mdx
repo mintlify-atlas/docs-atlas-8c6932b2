@@ -1,0 +1,362 @@
+---
+title: 'Authentication'
+description: 'Learn how to authenticate with the Portfolio Hub API using JWT tokens'
+---
+
+## Overview
+
+The Portfolio Hub API uses **JWT (JSON Web Tokens)** for authentication. After registering or logging in, you'll receive a token that must be included in the `Authorization` header for protected endpoints.
+
+## Authentication Flow
+
+<Steps>
+  <Step title="Register or Login">
+    Obtain a JWT token by registering a new account or logging in with existing credentials.
+  </Step>
+  
+  <Step title="Include Token in Requests">
+    Add the token to the `Authorization` header as a Bearer token for all authenticated requests.
+  </Step>
+  
+  <Step title="Token Validation">
+    The API validates the token on each request and extracts user information.
+  </Step>
+  
+  <Step title="Token Expiration">
+    Tokens expire after a configured duration. You'll need to login again to obtain a fresh token.
+  </Step>
+</Steps>
+
+## Registering a New Account
+
+Create a new user account to receive a JWT token.
+
+### Endpoint
+
+```
+POST /api/auth/register
+```
+
+### Request Body
+
+<ParamField body="fullName" type="string" required>
+  User's full name (3-120 characters)
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Valid email address (max 150 characters). Must be unique.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Password (8-100 characters)
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://your-domain.com/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullName": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Usuario registrado exitosamente",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9maWxlSWQiOjEsInVzZXJJZCI6MSwic3ViIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDk5ODQ2MDAsImV4cCI6MTcwOTk4ODIwMH0.signature"
+  },
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+<Note>
+  Upon successful registration, a profile is automatically created with a unique slug based on the full name.
+</Note>
+
+### Error Responses
+
+<CodeGroup>
+
+```json 409 Conflict - Email Already Exists
+{
+  "success": false,
+  "message": "El correo ya está en uso. Por favor intente otro.",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+```json 400 Bad Request - Validation Error
+{
+  "success": false,
+  "message": "Error de validación",
+  "data": {
+    "email": "must be a well-formed email address",
+    "password": "size must be between 8 and 100"
+  },
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+</CodeGroup>
+
+## Logging In
+
+Authenticate with existing credentials to receive a JWT token.
+
+### Endpoint
+
+```
+POST /api/auth/login
+```
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  Valid email address
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://your-domain.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Login exitoso",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9maWxlSWQiOjEsInVzZXJJZCI6MSwic3ViIjoiam9obi5kb2VAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDk5ODQ2MDAsImV4cCI6MTcwOTk4ODIwMH0.signature"
+  },
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+### Error Response
+
+```json 401 Unauthorized - Invalid Credentials
+{
+  "success": false,
+  "message": "Credenciales inválidas",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+## Using the JWT Token
+
+Once you have a token, include it in the `Authorization` header for all authenticated requests.
+
+### Authorization Header Format
+
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+### Example Authenticated Request
+
+```bash
+curl -X GET https://your-domain.com/api/me/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+<Warning>
+  Always include the word "Bearer" followed by a space before the token. The token must start at character position 7 in the header value.
+</Warning>
+
+## JWT Token Structure
+
+The JWT token includes the following claims:
+
+### Standard Claims
+
+<ResponseField name="sub" type="string">
+  Subject - the user's email address
+</ResponseField>
+
+<ResponseField name="iat" type="number">
+  Issued At - Unix timestamp when the token was created
+</ResponseField>
+
+<ResponseField name="exp" type="number">
+  Expiration - Unix timestamp when the token expires
+</ResponseField>
+
+### Custom Claims
+
+<ResponseField name="profileId" type="number">
+  The user's profile ID for quick profile access
+</ResponseField>
+
+<ResponseField name="userId" type="number">
+  The user's unique identifier
+</ResponseField>
+
+### Example Decoded Token
+
+```json
+{
+  "profileId": 1,
+  "userId": 1,
+  "sub": "john.doe@example.com",
+  "iat": 1709984600,
+  "exp": 1709988200
+}
+```
+
+## Token Expiration
+
+JWT tokens have a limited lifetime configured by the server administrator via the `JWT_EXPIRATION_TIME` environment variable (in minutes).
+
+<Note>
+  The default expiration time is configured server-side. When your token expires, you'll receive a 401 Unauthorized response and need to login again.
+</Note>
+
+### Handling Expired Tokens
+
+When a token expires, requests will fail with:
+
+```json 401 Unauthorized
+{
+  "success": false,
+  "message": "Authentication failed",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+**Best Practice**: Implement automatic re-authentication in your client application when receiving 401 responses.
+
+## Token Security
+
+The API uses HMAC-SHA256 for token signing, ensuring tokens cannot be tampered with.
+
+### Security Configuration
+
+- **Algorithm**: HMAC with SHA-256 (HS256)
+- **Secret Key**: Configured via `JWT_SECRET_KEY` environment variable
+- **Session Management**: Stateless (no server-side sessions)
+
+### Security Best Practices
+
+<Warning>
+  **Never** expose your JWT token in:
+  - URL parameters
+  - Browser console logs
+  - Client-side storage (use secure, httpOnly cookies instead)
+  - Version control systems
+  - Error messages
+</Warning>
+
+<Note>
+  **Do**:
+  - Store tokens securely (e.g., in-memory or secure storage)
+  - Use HTTPS to prevent token interception
+  - Implement token refresh logic before expiration
+  - Clear tokens on logout
+  - Validate tokens on every request
+</Note>
+
+## Protected Endpoints
+
+### User Endpoints (`/api/me/**`)
+
+Require valid JWT token with any authenticated user:
+
+- `GET /api/me/profile` - Get current user's profile
+- `PUT /api/me/profile` - Update current user's profile
+- `PUT /api/me/settings/contact-email` - Update contact email
+- All resource management endpoints (projects, skills, experience, etc.)
+
+### Admin Endpoints (`/api/admin/**`)
+
+Require JWT token with `ROLE_ADMIN` authority:
+
+- Administrative functions for managing global resources
+
+<Warning>
+  Admin endpoints require the user account to have `ROLE_ADMIN` authority. Regular users with valid tokens will receive a 403 Forbidden response.
+</Warning>
+
+## Accessing User Information
+
+When authenticated, the API automatically extracts user information from the token:
+
+```java
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+Long profileId = userDetails.getProfileId();
+Long userId = userDetails.getUserId();
+String email = userDetails.getUsername();
+```
+
+You don't need to manually include user IDs in requests - the API extracts them from your token.
+
+## Troubleshooting
+
+### Common Authentication Errors
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| `401 Unauthorized` | Missing or invalid token | Ensure token is included with "Bearer " prefix |
+| `401 Unauthorized` | Expired token | Login again to get a fresh token |
+| `403 Forbidden` | Insufficient permissions | Verify user has required role (e.g., ROLE_ADMIN) |
+| `400 Bad Request` | Malformed header | Check Authorization header format |
+
+### Testing Authentication
+
+You can test your authentication using tools like cURL or Postman:
+
+<CodeGroup>
+
+```bash cURL
+# 1. Login and capture token
+TOKEN=$(curl -X POST https://your-domain.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password"}' \
+  | jq -r '.data.token')
+
+# 2. Use token in authenticated request
+curl -X GET https://your-domain.com/api/me/profile \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('https://your-domain.com/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'password'
+  })
+});
+
+const { data } = await response.json();
+const token = data.token;
+
+// Use token in subsequent requests
+const profileResponse = await fetch('https://your-domain.com/api/me/profile', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+```
+
+</CodeGroup>

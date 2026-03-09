@@ -1,0 +1,188 @@
+---
+title: 'Login User'
+api: 'POST /api/auth/login'
+description: 'Authenticate a user and receive an authentication token'
+---
+
+## Endpoint
+
+```
+POST /api/auth/login
+```
+
+Authenticates an existing user with their email and password. Upon successful authentication, returns a JWT token that can be used for subsequent authenticated requests.
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  The registered email address of the user.
+  
+  **Validations:**
+  - Must not be blank
+  - Must be a valid email format
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The password for the user account.
+  
+  **Validations:**
+  - Must not be blank
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable message describing the result. Returns "Login exitoso" on success.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The authentication response data.
+  
+  <ResponseField name="token" type="string">
+    JWT authentication token to be used in subsequent requests. Include this token in the Authorization header as `Bearer {token}` for authenticated endpoints.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  ISO 8601 timestamp of when the response was generated.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.portfoliohub.com/api/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'john.doe@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+const token = data.data.token;
+
+// Use token in subsequent requests
+const protectedResponse = await fetch('https://api.portfoliohub.com/api/protected', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.portfoliohub.com/api/auth/login',
+    json={
+        'email': 'john.doe@example.com',
+        'password': 'securePassword123'
+    }
+)
+
+data = response.json()
+token = data['data']['token']
+
+# Use token in subsequent requests
+headers = {'Authorization': f'Bearer {token}'}
+protected_response = requests.get(
+    'https://api.portfoliohub.com/api/protected',
+    headers=headers
+)
+```
+
+```java Java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.portfoliohub.com/api/auth/login"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(
+        "{\"email\":\"john.doe@example.com\",\"password\":\"securePassword123\"}"
+    ))
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
+</CodeGroup>
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Login exitoso",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+  },
+  "timestamp": "2026-03-09T14:30:00.123Z"
+}
+```
+
+## Error Responses
+
+### Validation Error (400 Bad Request)
+
+Returned when request body fails validation constraints.
+
+```json
+{
+  "success": false,
+  "message": "Error de validación",
+  "data": {
+    "email": "must be a well-formed email address",
+    "password": "must not be blank"
+  },
+  "timestamp": "2026-03-09T14:30:00.123Z"
+}
+```
+
+### Invalid Credentials (401 Unauthorized)
+
+Returned when the email or password is incorrect.
+
+```json
+{
+  "success": false,
+  "message": "Credenciales inválidas",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.123Z"
+}
+```
+
+## Status Codes
+
+| Status Code | Description |
+|------------|-------------|
+| 200 | User successfully authenticated and token generated |
+| 400 | Invalid request body or validation errors |
+| 401 | Invalid email or password |
+| 500 | Internal server error |
+
+## Using the Authentication Token
+
+Once you receive the token from either the login or register endpoint, include it in the `Authorization` header of subsequent requests:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+The token contains encoded user information and is used to authenticate and authorize access to protected endpoints in the Portfolio Hub API.

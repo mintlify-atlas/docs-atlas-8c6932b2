@@ -1,0 +1,367 @@
+---
+title: 'Education'
+description: 'Manage education and academic background entries'
+---
+
+## List All Education
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/education
+```
+
+Retrieve all education entries for the authenticated user.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of education entries
+  
+  <ResponseField name="id" type="long">
+    Education entry ID
+  </ResponseField>
+  
+  <ResponseField name="institution" type="string">
+    Educational institution name
+  </ResponseField>
+  
+  <ResponseField name="degree" type="string">
+    Degree or qualification obtained
+  </ResponseField>
+  
+  <ResponseField name="field" type="string">
+    Field of study
+  </ResponseField>
+  
+  <ResponseField name="startDate" type="string">
+    Start date (ISO 8601 format: YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="endDate" type="string">
+    End date (ISO 8601 format: YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="description" type="string">
+    Additional details about the education
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/education \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Formaciones obtenidas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "institution": "Stanford University",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "startDate": "2015-09-01",
+      "endDate": "2019-06-15",
+      "description": "Focus on software engineering and artificial intelligence"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Get Education by ID
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/education/{id}
+```
+
+Retrieve a specific education entry by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Education entry ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Education entry details (same structure as list items)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/education/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Formación obtenida",
+  "data": {
+    "id": 1,
+    "institution": "Stanford University",
+    "degree": "Bachelor of Science",
+    "field": "Computer Science",
+    "startDate": "2015-09-01",
+    "endDate": "2019-06-15",
+    "description": "Focus on software engineering and artificial intelligence"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Create Education
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/education
+```
+
+Create a new education entry.
+
+### Request Body
+
+<ParamField body="institution" type="string" required>
+  Educational institution name (max 150 characters)
+</ParamField>
+
+<ParamField body="degree" type="string" required>
+  Degree or qualification obtained (max 150 characters)
+</ParamField>
+
+<ParamField body="field" type="string">
+  Field of study (max 150 characters)
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Start date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  End date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Additional details about the education (max 65535 characters)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Created education entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/education \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "institution": "Stanford University",
+    "degree": "Bachelor of Science",
+    "field": "Computer Science",
+    "startDate": "2015-09-01",
+    "endDate": "2019-06-15",
+    "description": "Focus on software engineering and artificial intelligence"
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Formación creada exitosamente",
+  "data": {
+    "id": 1,
+    "institution": "Stanford University",
+    "degree": "Bachelor of Science",
+    "field": "Computer Science",
+    "startDate": "2015-09-01",
+    "endDate": "2019-06-15",
+    "description": "Focus on software engineering and artificial intelligence"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update Education
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/education/{id}
+```
+
+Update an existing education entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Education entry ID to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="institution" type="string" required>
+  Educational institution name (max 150 characters)
+</ParamField>
+
+<ParamField body="degree" type="string" required>
+  Degree or qualification obtained (max 150 characters)
+</ParamField>
+
+<ParamField body="field" type="string">
+  Field of study (max 150 characters)
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Start date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  End date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Additional details about the education (max 65535 characters)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated education entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/education/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "institution": "Stanford University",
+    "degree": "Master of Science",
+    "field": "Computer Science",
+    "startDate": "2019-09-01",
+    "endDate": "2021-06-15",
+    "description": "Specialization in machine learning and distributed systems"
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Formación actualizada exitosamente",
+  "data": {
+    "id": 1,
+    "institution": "Stanford University",
+    "degree": "Master of Science",
+    "field": "Computer Science",
+    "startDate": "2019-09-01",
+    "endDate": "2021-06-15",
+    "description": "Specialization in machine learning and distributed systems"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Delete Education
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/education/{id}
+```
+
+Delete an education entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Education entry ID to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/education/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Formación eliminada exitosamente",
+  "data": null
+}
+```
+</CodeGroup>

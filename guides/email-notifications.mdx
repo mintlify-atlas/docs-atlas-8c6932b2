@@ -1,0 +1,578 @@
+---
+title: 'Email Notifications'
+description: 'Configure SMTP and send email notifications for contact form submissions'
+icon: 'envelope'
+---
+
+Portfolio Hub API sends email notifications when visitors submit contact forms. This guide covers SMTP configuration and the email notification system.
+
+## Overview
+
+The email notification system provides:
+- **Automated emails** when contact forms are submitted
+- **SMTP integration** with Gmail or custom mail servers
+- **Async processing** to avoid blocking API requests
+- **Error handling** with detailed logging
+
+<Note>
+Email notifications are sent asynchronously using Spring's `@Async` annotation, so API responses are not delayed by email delivery.
+</Note>
+
+## SMTP Configuration
+
+Configure your email settings in `application.properties`:
+
+```properties
+# Email SMTP Configuration
+spring.mail.host=${SMTP_HOST}
+spring.mail.port=${SMTP_PORT}
+spring.mail.username=${GMAIL_APP_EMAIL}
+spring.mail.password=${GMAIL_APP_PASSWORD}
+
+# JavaMail Properties
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+```
+
+From `application.properties:34-42`.
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|----------|
+| `SMTP_HOST` | Mail server hostname | `smtp.gmail.com` |
+| `SMTP_PORT` | Mail server port | `587` (TLS) or `465` (SSL) |
+| `GMAIL_APP_EMAIL` | Sender email address | `your-app@gmail.com` |
+| `GMAIL_APP_PASSWORD` | App-specific password | `abcd efgh ijkl mnop` |
+
+## Gmail Configuration
+
+To use Gmail as your SMTP server:
+
+<Steps>
+  <Step title="Enable 2-Factor Authentication">
+    1. Go to your [Google Account](https://myaccount.google.com/)
+    2. Navigate to Security
+    3. Enable 2-Step Verification if not already enabled
+  </Step>
+
+  <Step title="Generate App Password">
+    1. Go to [App Passwords](https://myaccount.google.com/apppasswords)
+    2. Select "Mail" as the app
+    3. Select "Other" as the device and name it "Portfolio Hub API"
+    4. Click "Generate"
+    5. Copy the 16-character password (remove spaces)
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Set the following values:
+    
+    ```bash
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=587
+    GMAIL_APP_EMAIL=your-email@gmail.com
+    GMAIL_APP_PASSWORD=your-16-char-app-password
+    ```
+  </Step>
+
+  <Step title="Test the Configuration">
+    Send a test email by submitting a contact form through the Public API.
+  </Step>
+</Steps>
+
+<Warning>
+**Important Gmail Notes:**
+
+- Never use your regular Gmail password - always use an App Password
+- App Passwords require 2-Step Verification to be enabled
+- If you change your Google password, App Passwords are revoked
+- Gmail has sending limits: 500 emails/day for free accounts
+</Warning>
+
+## Custom SMTP Server
+
+You can use any SMTP server instead of Gmail:
+
+<Tabs>
+  <Tab title="SendGrid">
+    ```bash
+    SMTP_HOST=smtp.sendgrid.net
+    SMTP_PORT=587
+    GMAIL_APP_EMAIL=apikey
+    GMAIL_APP_PASSWORD=your-sendgrid-api-key
+    ```
+  </Tab>
+
+  <Tab title="Mailgun">
+    ```bash
+    SMTP_HOST=smtp.mailgun.org
+    SMTP_PORT=587
+    GMAIL_APP_EMAIL=postmaster@your-domain.mailgun.org
+    GMAIL_APP_PASSWORD=your-mailgun-smtp-password
+    ```
+  </Tab>
+
+  <Tab title="Amazon SES">
+    ```bash
+    SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+    SMTP_PORT=587
+    GMAIL_APP_EMAIL=your-ses-smtp-username
+    GMAIL_APP_PASSWORD=your-ses-smtp-password
+    ```
+  </Tab>
+
+  <Tab title="Office 365">
+    ```bash
+    SMTP_HOST=smtp.office365.com
+    SMTP_PORT=587
+    GMAIL_APP_EMAIL=your-email@company.com
+    GMAIL_APP_PASSWORD=your-password
+    ```
+  </Tab>
+</Tabs>
+
+## Email Service Implementation
+
+The `EmailServiceImpl` handles sending contact notifications. From `EmailServiceImpl.java`:
+
+```java
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class EmailServiceImpl implements EmailService {
+
+    private final JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
+    @Async
+    @Override
+    public void sendContactNotification(Profile recipientProfile, ContactMessage message) {
+        try {
+            SimpleMailMessage mail = new SimpleMailMessage();
+            mail.setFrom(fromEmail);
+            mail.setTo(recipientProfile.getContactEmail());
+            mail.setSubject("Nuevo Mensaje de Contacto de: " + message.getName());
+
+            String text = String.format("""
+                                        Has recibido un nuevo mensaje a través de tu portafolio '%s':
+                                        
+                                        De: %s
+                                        Email: %s
+                                        
+                                        Mensaje:
+                                        %s""",
+                    recipientProfile.getFullName(),
+                    message.getName(),
+                    message.getEmail(),
+                    message.getMessage()
+            );
+            mail.setText(text);
+
+            mailSender.send(mail);
+            log.info("Email de contacto enviado exitosamente a {}", recipientProfile.getContactEmail());
+
+        } catch (MailException e) {
+            log.error("Error al enviar email de contacto a {}: {}", recipientProfile.getContactEmail(), e.getMessage(), e);
+        }
+    }
+}
+```
+
+### Key Features
+
+<CardGroup cols={2}>
+  <Card title="Async Processing" icon="bolt">
+    Uses `@Async` to send emails in the background without blocking the API response.
+  </Card>
+  
+  <Card title="Error Handling" icon="shield">
+    Catches `MailException` and logs errors without failing the API request.
+  </Card>
+  
+  <Card title="Custom Sender" icon="user">
+    Uses the configured `spring.mail.username` as the sender address.
+  </Card>
+  
+  <Card title="Dynamic Content" icon="file-lines">
+    Email body includes visitor's name, email, and message content.
+  </Card>
+</CardGroup>
+
+## Email Notification Flow
+
+When a visitor submits a contact form through the Public API:
+
+<Steps>
+  <Step title="Form Submission">
+    Visitor POSTs to `/api/portfolios/{slug}/contact` with their message.
+  </Step>
+
+  <Step title="Validation">
+    The request is validated using Jakarta Bean Validation:
+    - Name: required, max 120 characters
+    - Email: required, valid format
+    - Message: required, max 5000 characters
+  </Step>
+
+  <Step title="Save to Database">
+    The contact message is saved with status "NEW":
+    
+    ```java
+    ContactMessage message = new ContactMessage();
+    message.setName(contactRequest.name());
+    message.setEmail(contactRequest.email());
+    message.setMessage(contactRequest.message());
+    message.setProfile(profile);
+    message.setStatus("NEW");
+    ContactMessage savedMessage = contactMessageRepository.save(message);
+    ```
+  </Step>
+
+  <Step title="Send Email Notification">
+    The email service is called asynchronously:
+    
+    ```java
+    emailService.sendContactNotification(profile, savedMessage);
+    ```
+  </Step>
+
+  <Step title="Return Response">
+    The API immediately returns success to the visitor without waiting for email delivery.
+  </Step>
+</Steps>
+
+## Email Template
+
+The notification email sent to the portfolio owner looks like this:
+
+**Subject:**
+```
+Nuevo Mensaje de Contacto de: Alice Johnson
+```
+
+**Body:**
+```
+Has recibido un nuevo mensaje a través de tu portafolio 'John Doe':
+
+De: Alice Johnson
+Email: alice@example.com
+
+Mensaje:
+Hi John, I'd love to discuss a potential collaboration on a new project. 
+Are you available for a call next week?
+```
+
+### Customizing the Email Template
+
+To customize the email content, edit the template in `EmailServiceImpl.java:38-50`:
+
+```java
+String text = String.format("""
+    Has recibido un nuevo mensaje a través de tu portafolio '%s':
+    
+    De: %s
+    Email: %s
+    
+    Mensaje:
+    %s""",
+    recipientProfile.getFullName(),
+    message.getName(),
+    message.getEmail(),
+    message.getMessage()
+);
+```
+
+You can:
+- Change the language
+- Add more fields
+- Include HTML formatting (use `MimeMessage` instead of `SimpleMailMessage`)
+- Add links to view the message in a web interface
+
+## HTML Emails
+
+To send HTML emails instead of plain text:
+
+```java
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
+
+@Async
+@Override
+public void sendContactNotification(Profile recipientProfile, ContactMessage message) {
+    try {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+        
+        helper.setFrom(fromEmail);
+        helper.setTo(recipientProfile.getContactEmail());
+        helper.setSubject("New Contact Message from: " + message.getName());
+        
+        String htmlContent = String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>New Contact Message</h2>
+                <p>You received a new message through your portfolio <strong>%s</strong>:</p>
+                
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>From:</strong> %s</p>
+                    <p><strong>Email:</strong> <a href="mailto:%s">%s</a></p>
+                </div>
+                
+                <div style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                    <p><strong>Message:</strong></p>
+                    <p>%s</p>
+                </div>
+                
+                <p style="margin-top: 20px; color: #666; font-size: 12px;">
+                    This message was sent through your Portfolio Hub contact form.
+                </p>
+            </body>
+            </html>
+            """,
+            recipientProfile.getFullName(),
+            message.getName(),
+            message.getEmail(),
+            message.getEmail(),
+            message.getMessage().replace("\n", "<br>")
+        );
+        
+        helper.setText(htmlContent, true);
+        mailSender.send(mimeMessage);
+        
+        log.info("Email notification sent successfully to {}", recipientProfile.getContactEmail());
+        
+    } catch (MessagingException | MailException e) {
+        log.error("Error sending email to {}: {}", recipientProfile.getContactEmail(), e.getMessage(), e);
+    }
+}
+```
+
+## Enabling Async Processing
+
+Ensure async processing is enabled in your Spring Boot application:
+
+```java
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@Configuration
+@EnableAsync
+public class AsyncConfig {
+    // Async is now enabled
+}
+```
+
+## Testing Email Configuration
+
+### Manual Testing
+
+<Steps>
+  <Step title="Submit Contact Form">
+    Use the Public API to send a test message:
+    
+    ```bash
+    curl -X POST http://localhost:8080/api/portfolios/your-slug/contact \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "Test User",
+        "email": "test@example.com",
+        "message": "This is a test message."
+      }'
+    ```
+  </Step>
+
+  <Step title="Check API Response">
+    Verify you receive a success response:
+    
+    ```json
+    {
+      "success": true,
+      "message": "Mensaje enviado exitosamente"
+    }
+    ```
+  </Step>
+
+  <Step title="Check Application Logs">
+    Look for the log message:
+    
+    ```
+    Email de contacto enviado exitosamente a your-email@example.com
+    ```
+    
+    Or if there's an error:
+    
+    ```
+    Error al enviar email de contacto a your-email@example.com: Authentication failed
+    ```
+  </Step>
+
+  <Step title="Check Email Inbox">
+    Verify the email arrived in the portfolio owner's inbox.
+  </Step>
+</Steps>
+
+### Common Testing Issues
+
+<Tabs>
+  <Tab title="Authentication Failed">
+    **Error in logs:**
+    ```
+    Error al enviar email de contacto: Authentication failed
+    ```
+    
+    **Solutions:**
+    - Verify the app password is correct (no spaces)
+    - Ensure 2-Step Verification is enabled for Gmail
+    - Check that the email address is correct
+    - Try generating a new app password
+  </Tab>
+
+  <Tab title="Connection Timeout">
+    **Error in logs:**
+    ```
+    Error al enviar email de contacto: Couldn't connect to host
+    ```
+    
+    **Solutions:**
+    - Check SMTP host and port are correct
+    - Verify firewall isn't blocking port 587 or 465
+    - Try using port 465 with SSL instead of 587 with TLS
+    - Check if your network requires a proxy
+  </Tab>
+
+  <Tab title="Email Not Received">
+    **API succeeds but no email arrives:**
+    
+    **Solutions:**
+    - Check spam/junk folder
+    - Verify `recipientProfile.getContactEmail()` is correct
+    - Check Gmail sent folder to confirm it was sent
+    - Review application logs for any errors
+    - Ensure async processing is enabled
+  </Tab>
+
+  <Tab title="SSL/TLS Issues">
+    **Error in logs:**
+    ```
+    Error al enviar email de contacto: PKIX path building failed
+    ```
+    
+    **Solutions:**
+    - Update Java certificates
+    - Try different SMTP port (587 vs 465)
+    - Adjust mail properties:
+      ```properties
+      spring.mail.properties.mail.smtp.ssl.trust=smtp.gmail.com
+      ```
+  </Tab>
+</Tabs>
+
+## Production Considerations
+
+<Warning>
+**Important for Production:**
+
+1. **Use a dedicated email service** - Gmail has low sending limits (500/day)
+2. **Implement rate limiting** - Prevent abuse of the contact form
+3. **Add CAPTCHA** - Protect against spam bots
+4. **Monitor email delivery** - Track successful sends and failures
+5. **Set up SPF/DKIM/DMARC** - Improve email deliverability
+6. **Add email templates** - Use professional HTML templates
+7. **Log all contact attempts** - For security and debugging
+8. **Consider email verification** - Verify sender's email before sending notification
+</Warning>
+
+### Recommended Production Services
+
+| Service | Free Tier | Monthly Cost | Sending Limit |
+|---------|-----------|--------------|---------------|
+| SendGrid | 100 emails/day | $15+ | 40,000+ emails/mo |
+| Mailgun | 100 emails/day | $15+ | Unlimited |
+| Amazon SES | 62,000 emails/mo | $0.10/1000 | Pay as you go |
+| Postmark | 100 emails/mo | $15+ | 10,000+ emails/mo |
+
+## Advanced Features
+
+### Auto-Reply to Sender
+
+Send a confirmation email to the visitor:
+
+```java
+@Async
+public void sendAutoReply(ContactMessage message) {
+    try {
+        SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setFrom(fromEmail);
+        mail.setTo(message.getEmail());
+        mail.setSubject("Thanks for contacting me!");
+        mail.setText(
+            "Hi " + message.getName() + ",\n\n" +
+            "Thank you for your message! I'll get back to you as soon as possible.\n\n" +
+            "Best regards"
+        );
+        
+        mailSender.send(mail);
+        log.info("Auto-reply sent to {}", message.getEmail());
+    } catch (MailException e) {
+        log.error("Error sending auto-reply: {}", e.getMessage());
+    }
+}
+```
+
+### Email Attachments
+
+Allow visitors to attach files:
+
+```java
+public void sendContactWithAttachment(Profile profile, ContactMessage message, MultipartFile attachment) {
+    try {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+        
+        helper.setFrom(fromEmail);
+        helper.setTo(profile.getContactEmail());
+        helper.setSubject("New message from: " + message.getName());
+        helper.setText(message.getMessage());
+        
+        if (attachment != null && !attachment.isEmpty()) {
+            helper.addAttachment(
+                attachment.getOriginalFilename(),
+                attachment
+            );
+        }
+        
+        mailSender.send(mimeMessage);
+    } catch (MessagingException | MailException e) {
+        log.error("Error sending email with attachment: {}", e.getMessage());
+    }
+}
+```
+
+## Monitoring and Logging
+
+The email service includes comprehensive logging:
+
+```java
+log.info("Email de contacto enviado exitosamente a {}", recipientProfile.getContactEmail());
+log.error("Error al enviar email de contacto a {}: {}", recipientProfile.getContactEmail(), e.getMessage(), e);
+```
+
+In production, consider:
+- **Sending logs to a monitoring service** (Datadog, Sentry, etc.)
+- **Creating metrics** for email success/failure rates
+- **Setting up alerts** for email delivery failures
+- **Tracking bounce rates** and spam reports
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Public API" icon="globe" href="/guides/public-api">
+    Learn how the contact form is exposed through the Public API
+  </Card>
+  <Card title="Managing Portfolio" icon="briefcase" href="/guides/managing-portfolio">
+    Update your contact email and portfolio information
+  </Card>
+</CardGroup>

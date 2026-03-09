@@ -1,0 +1,333 @@
+---
+title: Installation
+description: Get Portfolio Hub API up and running on your local machine
+---
+
+This guide will walk you through installing and running Portfolio Hub API on your development environment.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+<CardGroup cols={2}>
+  <Card title="Java 21 (JDK)" icon="java">
+    Required for running Spring Boot 3.5.6
+  </Card>
+  <Card title="Maven 3.9+" icon="box">
+    Build automation and dependency management
+  </Card>
+  <Card title="MySQL 8.0+" icon="database">
+    Primary database for portfolio data
+  </Card>
+  <Card title="Google Cloud Account" icon="cloud">
+    For Google Drive file uploads (optional)
+  </Card>
+</CardGroup>
+
+<Note>
+  Portfolio Hub API uses **Spring Boot 3.5.6** which requires Java 21. Make sure you have the correct JDK version installed.
+</Note>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Verify Java Installation">
+    Check that Java 21 is installed and set as your default JDK:
+    
+    ```bash
+    java -version
+    ```
+    
+    You should see output indicating Java version 21:
+    
+    ```
+    openjdk version "21.0.x" 2024-xx-xx
+    OpenJDK Runtime Environment (build 21.0.x+xx)
+    OpenJDK 64-Bit Server VM (build 21.0.x+xx, mixed mode, sharing)
+    ```
+    
+    <Accordion title="Installing Java 21">
+      **On macOS (using Homebrew):**
+      ```bash
+      brew install openjdk@21
+      ```
+      
+      **On Ubuntu/Debian:**
+      ```bash
+      sudo apt update
+      sudo apt install openjdk-21-jdk
+      ```
+      
+      **On Windows:**
+      Download and install from [Oracle](https://www.oracle.com/java/technologies/downloads/#java21) or [Adoptium](https://adoptium.net/).
+    </Accordion>
+  </Step>
+
+  <Step title="Verify Maven Installation">
+    Check that Maven 3.9+ is installed:
+    
+    ```bash
+    mvn -version
+    ```
+    
+    Expected output:
+    ```
+    Apache Maven 3.9.x
+    Maven home: /path/to/maven
+    Java version: 21.0.x
+    ```
+    
+    <Accordion title="Installing Maven">
+      **On macOS (using Homebrew):**
+      ```bash
+      brew install maven
+      ```
+      
+      **On Ubuntu/Debian:**
+      ```bash
+      sudo apt update
+      sudo apt install maven
+      ```
+      
+      **On Windows:**
+      Download from [Apache Maven](https://maven.apache.org/download.cgi) and add to PATH.
+    </Accordion>
+  </Step>
+
+  <Step title="Clone the Repository">
+    Clone the Portfolio Hub API repository to your local machine:
+    
+    ```bash
+    git clone <repository-url>
+    cd portfolio-hub-api
+    ```
+  </Step>
+
+  <Step title="Install Dependencies">
+    Maven will automatically download all required dependencies based on the `pom.xml` configuration:
+    
+    ```bash
+    mvn clean install
+    ```
+    
+    This command will:
+    - Download all Spring Boot dependencies
+    - Compile the source code
+    - Run unit tests
+    - Package the application
+    
+    <Note>
+      The first build may take several minutes as Maven downloads all dependencies.
+    </Note>
+  </Step>
+
+  <Step title="Set Up MySQL Database">
+    Create the database schema that Portfolio Hub API will use:
+    
+    ```sql
+    CREATE SCHEMA IF NOT EXISTS `studiostkoh.portafolio`;
+    ```
+    
+    <Warning>
+      Do not create tables manually. Flyway migrations will automatically create and manage the database schema on first startup.
+    </Warning>
+    
+    See the [Database Setup](/setup/database) guide for detailed MySQL configuration.
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Portfolio Hub API requires several environment variables to be set. Create a `.env` file or export these variables:
+    
+    ```bash
+    # Database Configuration
+    export MYSQL_HOST=localhost
+    export MYSQL_PORT=3306
+    export MYSQL_DATABASE=studiostkoh.portafolio
+    export MYSQL_USER=your_username
+    export MYSQL_PASSWORD=your_password
+    
+    # JWT Configuration
+    export JWT_TOKEN=your_secret_key_min_256_bits
+    export JWT_EXPIRATION_TIME=60
+    
+    # CORS Configuration
+    export CORS_ALLOWED_ORIGINS=http://localhost:3000
+    ```
+    
+    <Note>
+      Google Drive and SMTP configuration are optional for basic setup. See the [Configuration](/setup/configuration) guide for all available options.
+    </Note>
+  </Step>
+
+  <Step title="Run the Application">
+    Start the Portfolio Hub API using Maven:
+    
+    ```bash
+    ./mvnw spring-boot:run
+    ```
+    
+    Or if you're on Windows:
+    ```bash
+    mvnw.cmd spring-boot:run
+    ```
+    
+    The application will start on port 8080 by default. You should see output similar to:
+    
+    ```
+    Started PortfolioApplication in 5.234 seconds (process running for 5.567)
+    ```
+  </Step>
+
+  <Step title="Verify Installation">
+    Test that the API is running by accessing the Swagger UI documentation:
+    
+    ```
+    http://localhost:8080/swagger-ui/index.html
+    ```
+    
+    You should see the interactive API documentation with all available endpoints.
+    
+    <Check>
+      If you see the Swagger UI, congratulations! Portfolio Hub API is successfully installed.
+    </Check>
+  </Step>
+</Steps>
+
+## Key Dependencies
+
+Portfolio Hub API includes the following major dependencies:
+
+| Dependency | Version | Purpose |
+|------------|---------|----------|
+| Spring Boot | 3.5.6 | Core framework |
+| Spring Security | 6.x | JWT authentication |
+| Spring Data JPA | 3.x | Database operations |
+| MySQL Connector | Latest | MySQL database driver |
+| Flyway | Latest | Database migrations |
+| JWT (jjwt) | 0.12.6 | JSON Web Token handling |
+| MapStruct | 1.6.3 | DTO mapping |
+| Lombok | 1.18.40 | Reduce boilerplate code |
+| SpringDoc | 2.8.14 | OpenAPI/Swagger documentation |
+| Google Drive API | v3 | File upload integration |
+
+## Build Configuration
+
+The project uses annotation processors for Lombok and MapStruct. These are configured in the `pom.xml`:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+        <annotationProcessorPaths>
+            <path>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>1.6.3</version>
+            </path>
+            <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.40</version>
+            </path>
+            <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>0.2.0</version>
+            </path>
+        </annotationProcessorPaths>
+    </configuration>
+</plugin>
+```
+
+## Running in Production
+
+To build a production-ready JAR file:
+
+```bash
+mvn clean package -DskipTests
+```
+
+This creates an executable JAR in the `target/` directory:
+
+```bash
+java -jar target/portfolio-0.5-M1.jar
+```
+
+<Warning>
+  Always set production environment variables before running in production. Never use default or development credentials.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 8080 already in use">
+    Change the port by setting the `server.port` property:
+    
+    ```bash
+    ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
+    ```
+    
+    Or add to `application.properties`:
+    ```properties
+    server.port=8081
+    ```
+  </Accordion>
+
+  <Accordion title="MySQL connection refused">
+    Verify that:
+    1. MySQL server is running
+    2. The database schema exists
+    3. Environment variables are correctly set
+    4. User has proper permissions
+    
+    Test connection:
+    ```bash
+    mysql -h localhost -u your_username -p
+    ```
+  </Accordion>
+
+  <Accordion title="Flyway migration failures">
+    If migrations fail, check:
+    1. Database user has CREATE/ALTER permissions
+    2. The schema exists: `CREATE SCHEMA IF NOT EXISTS \`studiostkoh.portafolio\`;`
+    3. No manual table modifications have been made
+    
+    To reset (development only):
+    ```sql
+    DROP SCHEMA `studiostkoh.portafolio`;
+    CREATE SCHEMA `studiostkoh.portafolio`;
+    ```
+  </Accordion>
+
+  <Accordion title="Java version mismatch">
+    Portfolio Hub API requires Java 21. If you have multiple Java versions:
+    
+    **Set JAVA_HOME:**
+    ```bash
+    export JAVA_HOME=/path/to/java-21
+    ```
+    
+    **Verify:**
+    ```bash
+    $JAVA_HOME/bin/java -version
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/setup/configuration">
+    Configure environment variables and application properties
+  </Card>
+  <Card title="Database Setup" icon="database" href="/setup/database">
+    Learn about the database schema and Flyway migrations
+  </Card>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Set up JWT authentication and create your first user
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore all available API endpoints
+  </Card>
+</CardGroup>

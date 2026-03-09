@@ -1,0 +1,385 @@
+---
+title: 'Experience'
+description: 'Manage work experience entries for your portfolio'
+---
+
+## List All Experiences
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/experience
+```
+
+Retrieve all work experience entries for the authenticated user.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of experience entries
+  
+  <ResponseField name="id" type="long">
+    Experience entry ID
+  </ResponseField>
+  
+  <ResponseField name="company" type="string">
+    Company name
+  </ResponseField>
+  
+  <ResponseField name="role" type="string">
+    Job role/title
+  </ResponseField>
+  
+  <ResponseField name="location" type="string">
+    Job location
+  </ResponseField>
+  
+  <ResponseField name="startDate" type="string">
+    Start date (ISO 8601 format: YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="endDate" type="string">
+    End date (ISO 8601 format: YYYY-MM-DD), null if current
+  </ResponseField>
+  
+  <ResponseField name="current" type="boolean">
+    Whether this is a current position
+  </ResponseField>
+  
+  <ResponseField name="description" type="string">
+    Job description and responsibilities
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/experience \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Experiencias obtenidas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "company": "Tech Corp",
+      "role": "Senior Developer",
+      "location": "San Francisco, CA",
+      "startDate": "2022-01-15",
+      "endDate": null,
+      "current": true,
+      "description": "Leading development of microservices architecture..."
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Get Experience by ID
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/experience/{id}
+```
+
+Retrieve a specific work experience entry by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Experience entry ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Experience entry details (same structure as list items)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/experience/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Experiencia obtenida",
+  "data": {
+    "id": 1,
+    "company": "Tech Corp",
+    "role": "Senior Developer",
+    "location": "San Francisco, CA",
+    "startDate": "2022-01-15",
+    "endDate": null,
+    "current": true,
+    "description": "Leading development of microservices architecture..."
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Create Experience
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/experience
+```
+
+Create a new work experience entry.
+
+### Request Body
+
+<ParamField body="company" type="string" required>
+  Company name (max 150 characters)
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  Job role/title (max 150 characters)
+</ParamField>
+
+<ParamField body="location" type="string">
+  Job location (max 100 characters)
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Start date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  End date in ISO 8601 format (YYYY-MM-DD), required if current is false
+</ParamField>
+
+<ParamField body="current" type="boolean" required>
+  Whether this is a current position
+</ParamField>
+
+<ParamField body="description" type="string">
+  Job description and responsibilities (max 65535 characters)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Created experience entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/experience \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company": "Tech Corp",
+    "role": "Senior Developer",
+    "location": "San Francisco, CA",
+    "startDate": "2022-01-15",
+    "endDate": null,
+    "current": true,
+    "description": "Leading development of microservices architecture using Java and Spring Boot."
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Experiencia creada exitosamente",
+  "data": {
+    "id": 1,
+    "company": "Tech Corp",
+    "role": "Senior Developer",
+    "location": "San Francisco, CA",
+    "startDate": "2022-01-15",
+    "endDate": null,
+    "current": true,
+    "description": "Leading development of microservices architecture using Java and Spring Boot."
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update Experience
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/experience/{id}
+```
+
+Update an existing work experience entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Experience entry ID to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="company" type="string" required>
+  Company name (max 150 characters)
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  Job role/title (max 150 characters)
+</ParamField>
+
+<ParamField body="location" type="string">
+  Job location (max 100 characters)
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Start date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  End date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="current" type="boolean" required>
+  Whether this is a current position
+</ParamField>
+
+<ParamField body="description" type="string">
+  Job description and responsibilities (max 65535 characters)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated experience entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/experience/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company": "Tech Corp",
+    "role": "Lead Developer",
+    "location": "San Francisco, CA",
+    "startDate": "2022-01-15",
+    "endDate": null,
+    "current": true,
+    "description": "Leading development of microservices architecture and mentoring junior developers."
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Experiencia actualizada exitosamente",
+  "data": {
+    "id": 1,
+    "company": "Tech Corp",
+    "role": "Lead Developer",
+    "location": "San Francisco, CA",
+    "startDate": "2022-01-15",
+    "endDate": null,
+    "current": true,
+    "description": "Leading development of microservices architecture and mentoring junior developers."
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Delete Experience
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/experience/{id}
+```
+
+Delete a work experience entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Experience entry ID to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/experience/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Experiencia eliminada exitosamente",
+  "data": null
+}
+```
+</CodeGroup>

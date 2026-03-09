@@ -1,0 +1,267 @@
+---
+title: 'Admin API Overview'
+description: 'Administrative endpoints for managing Portfolio Hub users and profiles'
+---
+
+<Warning>
+  **Admin Access Required**: All endpoints in this section require `ROLE_ADMIN` authority. Unauthorized requests will receive a `403 Forbidden` response.
+</Warning>
+
+## Authentication & Authorization
+
+Admin endpoints use a role-based access control (RBAC) system built on Spring Security and JWT authentication.
+
+### Role Requirements
+
+Admin endpoints require:
+- Valid JWT token in the `Authorization` header
+- User account with `ROLE_ADMIN` authority assigned
+
+The system validates both authentication (valid token) and authorization (admin role) before processing requests.
+
+### Security Implementation
+
+**Authorization Header Format**:
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Role Validation**: All `/api/admin/**` routes are protected by the `hasAuthority("ROLE_ADMIN")` security rule defined in `SecurityConfig.java:52`.
+
+**Session Management**: Stateless JWT-based authentication (no server-side sessions).
+
+## Available Endpoints
+
+### Toggle TKOH Collaborator Status
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/admin/profiles/{profileId}/toggle-collaborator \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const response = await fetch(
+  `https://api.portfoliohub.com/api/admin/profiles/${profileId}/toggle-collaborator`,
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+url = f"https://api.portfoliohub.com/api/admin/profiles/{profile_id}/toggle-collaborator"
+headers = {
+    "Authorization": f"Bearer {token}",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, headers=headers)
+data = response.json()
+```
+
+```java Java
+HttpClient client = HttpClient.newHttpClient();
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.portfoliohub.com/api/admin/profiles/" + profileId + "/toggle-collaborator"))
+    .header("Authorization", "Bearer " + token)
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.noBody())
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+</CodeGroup>
+
+Toggle the TKOH Collaborator status for a specific profile. This administrative action marks or unmarks a user as an official collaborator.
+
+#### Path Parameters
+
+<ParamField path="profileId" type="long" required>
+  The unique identifier of the profile to update
+</ParamField>
+
+#### Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the operation completed successfully
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable message describing the result (e.g., "Estado de colaborador actualizado")
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 timestamp of when the response was generated
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The updated profile information
+
+  <ResponseField name="data.id" type="long">
+    Profile unique identifier
+  </ResponseField>
+
+  <ResponseField name="data.slug" type="string">
+    URL-friendly profile identifier
+  </ResponseField>
+
+  <ResponseField name="data.fullName" type="string">
+    User's full name
+  </ResponseField>
+
+  <ResponseField name="data.headline" type="string">
+    Professional headline or tagline
+  </ResponseField>
+
+  <ResponseField name="data.bio" type="string">
+    Profile biography or description
+  </ResponseField>
+
+  <ResponseField name="data.contactEmail" type="string">
+    Public contact email address
+  </ResponseField>
+
+  <ResponseField name="data.location" type="string">
+    Geographic location
+  </ResponseField>
+
+  <ResponseField name="data.avatarUrl" type="string">
+    URL to the profile avatar image
+  </ResponseField>
+
+  <ResponseField name="data.resumeUrl" type="string">
+    URL to the user's resume document
+  </ResponseField>
+</ResponseField>
+
+#### Response Example
+
+```json
+{
+  "success": true,
+  "message": "Estado de colaborador actualizado",
+  "timestamp": "2026-03-09T15:30:45.123Z",
+  "data": {
+    "id": 42,
+    "slug": "john-doe",
+    "fullName": "John Doe",
+    "headline": "Full Stack Developer",
+    "bio": "Passionate developer with 5+ years of experience...",
+    "contactEmail": "john@example.com",
+    "location": "San Francisco, CA",
+    "avatarUrl": "https://cdn.portfoliohub.com/avatars/john-doe.jpg",
+    "resumeUrl": "https://cdn.portfoliohub.com/resumes/john-doe.pdf"
+  }
+}
+```
+
+#### Error Responses
+
+**403 Forbidden** - User lacks admin privileges
+```json
+{
+  "success": false,
+  "message": "Access denied",
+  "timestamp": "2026-03-09T15:30:45.123Z",
+  "data": null
+}
+```
+
+**401 Unauthorized** - Invalid or missing JWT token
+```json
+{
+  "success": false,
+  "message": "Authentication required",
+  "timestamp": "2026-03-09T15:30:45.123Z",
+  "data": null
+}
+```
+
+**404 Not Found** - Profile does not exist
+```json
+{
+  "success": false,
+  "message": "Profile not found",
+  "timestamp": "2026-03-09T15:30:45.123Z",
+  "data": null
+}
+```
+
+## Access Control Details
+
+### User Roles
+
+The system uses a simple role-based model stored in the `roles` field of the `User` entity:
+
+- **ROLE_USER**: Standard user with access to their own profile management
+- **ROLE_ADMIN**: Administrator with access to all admin endpoints
+
+### JWT Token Claims
+
+Admin authentication tokens include the following claims:
+
+<ParamField body="sub" type="string" required>
+  Subject - the user's email address
+</ParamField>
+
+<ParamField body="userId" type="long" required>
+  The user's database identifier
+</ParamField>
+
+<ParamField body="profileId" type="long" required>
+  The associated profile identifier
+</ParamField>
+
+<ParamField body="iat" type="long" required>
+  Issued at timestamp (Unix time)
+</ParamField>
+
+<ParamField body="exp" type="long" required>
+  Expiration timestamp (Unix time)
+</ParamField>
+
+### Security Filter Chain
+
+The admin endpoints are protected by the following security mechanisms:
+
+1. **JWT Authentication Filter**: Validates the JWT token and extracts user details
+2. **Authorization Check**: Verifies the user has `ROLE_ADMIN` authority
+3. **Stateless Sessions**: No server-side session management required
+
+### CORS Configuration
+
+Admin endpoints respect the same CORS configuration as other API endpoints:
+
+- **Allowed Methods**: GET, POST, PUT, DELETE, OPTIONS, PATCH
+- **Allowed Headers**: Authorization, Content-Type, Cache-Control
+- **Credentials**: Supported for authenticated requests
+
+## Best Practices
+
+<Warning>
+  **Token Security**: Never expose admin JWT tokens in client-side code, logs, or version control. Store tokens securely in environment variables or secure storage.
+</Warning>
+
+1. **Token Expiration**: Admin tokens expire based on the `application.security.jwt.expiration` configuration (typically 60 minutes)
+2. **Token Refresh**: Implement token refresh logic before expiration to maintain admin sessions
+3. **Error Handling**: Always check the `success` field in responses and handle errors appropriately
+4. **Audit Logging**: Consider logging all admin actions for compliance and security auditing
+5. **Rate Limiting**: Implement rate limiting on admin endpoints to prevent abuse
+
+## Source Code Reference
+
+- **Controller**: `studios/tkoh/portfolio/controller/AdminController.java:20`
+- **Security Config**: `studios/tkoh/portfolio/config/SecurityConfig.java:52`
+- **User Model**: `studios/tkoh/portfolio/model/User.java:51`
+- **JWT Service**: `studios/tkoh/portfolio/security/JwtService.java`

@@ -1,0 +1,578 @@
+---
+title: 'Projects'
+description: 'Manage portfolio projects and associate skills'
+---
+
+## List All Projects
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/projects
+```
+
+Retrieve all project entries for the authenticated user.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of project entries
+  
+  <ResponseField name="id" type="long">
+    Project ID
+  </ResponseField>
+  
+  <ResponseField name="title" type="string">
+    Project title
+  </ResponseField>
+  
+  <ResponseField name="slug" type="string">
+    URL-friendly project slug
+  </ResponseField>
+  
+  <ResponseField name="summary" type="string">
+    Brief project summary
+  </ResponseField>
+  
+  <ResponseField name="description" type="string">
+    Detailed project description
+  </ResponseField>
+  
+  <ResponseField name="repoUrl" type="string">
+    Repository URL (e.g., GitHub)
+  </ResponseField>
+  
+  <ResponseField name="liveUrl" type="string">
+    Live demo URL
+  </ResponseField>
+  
+  <ResponseField name="coverImage" type="string">
+    Cover image URL
+  </ResponseField>
+  
+  <ResponseField name="startDate" type="string">
+    Project start date (ISO 8601 format: YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="endDate" type="string">
+    Project end date (ISO 8601 format: YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="featured" type="boolean">
+    Whether this project is featured
+  </ResponseField>
+  
+  <ResponseField name="sortOrder" type="integer">
+    Display order for sorting
+  </ResponseField>
+  
+  <ResponseField name="skills" type="array">
+    Array of associated skills
+    
+    <ResponseField name="id" type="long">
+      Skill ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Skill name
+    </ResponseField>
+    
+    <ResponseField name="globalSkillId" type="long">
+      Global skill reference ID
+    </ResponseField>
+    
+    <ResponseField name="level" type="integer">
+      Skill proficiency level (0-100)
+    </ResponseField>
+    
+    <ResponseField name="icon" type="string">
+      Skill icon identifier
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/projects \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Proyectos obtenidos exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "title": "E-Commerce Platform",
+      "slug": "e-commerce-platform",
+      "summary": "Full-stack e-commerce solution with real-time inventory",
+      "description": "Built a scalable e-commerce platform using microservices...",
+      "repoUrl": "https://github.com/user/ecommerce",
+      "liveUrl": "https://demo.ecommerce.com",
+      "coverImage": "https://example.com/projects/ecommerce.jpg",
+      "startDate": "2023-01-15",
+      "endDate": "2023-06-30",
+      "featured": true,
+      "sortOrder": 1,
+      "skills": [
+        {
+          "id": 10,
+          "name": "Java",
+          "globalSkillId": 100,
+          "level": 90,
+          "icon": "java-icon"
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Get Project by ID
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/projects/{id}
+```
+
+Retrieve a specific project entry by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Project ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Project details (same structure as list items)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/projects/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Proyecto obtenido",
+  "data": {
+    "id": 1,
+    "title": "E-Commerce Platform",
+    "slug": "e-commerce-platform",
+    "summary": "Full-stack e-commerce solution with real-time inventory",
+    "description": "Built a scalable e-commerce platform using microservices...",
+    "repoUrl": "https://github.com/user/ecommerce",
+    "liveUrl": "https://demo.ecommerce.com",
+    "coverImage": "https://example.com/projects/ecommerce.jpg",
+    "startDate": "2023-01-15",
+    "endDate": "2023-06-30",
+    "featured": true,
+    "sortOrder": 1,
+    "skills": []
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Create Project
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/projects
+```
+
+Create a new project entry.
+
+### Request Body
+
+<ParamField body="title" type="string" required>
+  Project title (max 140 characters)
+</ParamField>
+
+<ParamField body="summary" type="string" required>
+  Brief project summary (max 280 characters)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Detailed project description (max 65535 characters)
+</ParamField>
+
+<ParamField body="repoUrl" type="string">
+  Repository URL (max 512 characters)
+</ParamField>
+
+<ParamField body="liveUrl" type="string">
+  Live demo URL (max 512 characters)
+</ParamField>
+
+<ParamField body="coverImage" type="string">
+  Cover image URL (max 512 characters)
+</ParamField>
+
+<ParamField body="startDate" type="string">
+  Project start date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  Project end date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="featured" type="boolean" required>
+  Whether this project should be featured
+</ParamField>
+
+<ParamField body="sortOrder" type="integer" required>
+  Display order for sorting projects
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Created project entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/projects \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "E-Commerce Platform",
+    "summary": "Full-stack e-commerce solution with real-time inventory",
+    "description": "Built a scalable e-commerce platform using microservices architecture...",
+    "repoUrl": "https://github.com/user/ecommerce",
+    "liveUrl": "https://demo.ecommerce.com",
+    "coverImage": "https://example.com/projects/ecommerce.jpg",
+    "startDate": "2023-01-15",
+    "endDate": "2023-06-30",
+    "featured": true,
+    "sortOrder": 1
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Proyecto creado exitosamente",
+  "data": {
+    "id": 1,
+    "title": "E-Commerce Platform",
+    "slug": "e-commerce-platform",
+    "summary": "Full-stack e-commerce solution with real-time inventory",
+    "description": "Built a scalable e-commerce platform using microservices architecture...",
+    "repoUrl": "https://github.com/user/ecommerce",
+    "liveUrl": "https://demo.ecommerce.com",
+    "coverImage": "https://example.com/projects/ecommerce.jpg",
+    "startDate": "2023-01-15",
+    "endDate": "2023-06-30",
+    "featured": true,
+    "sortOrder": 1,
+    "skills": []
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update Project
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/projects/{id}
+```
+
+Update an existing project entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Project ID to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="title" type="string" required>
+  Project title (max 140 characters)
+</ParamField>
+
+<ParamField body="summary" type="string" required>
+  Brief project summary (max 280 characters)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Detailed project description (max 65535 characters)
+</ParamField>
+
+<ParamField body="repoUrl" type="string">
+  Repository URL (max 512 characters)
+</ParamField>
+
+<ParamField body="liveUrl" type="string">
+  Live demo URL (max 512 characters)
+</ParamField>
+
+<ParamField body="coverImage" type="string">
+  Cover image URL (max 512 characters)
+</ParamField>
+
+<ParamField body="startDate" type="string">
+  Project start date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  Project end date in ISO 8601 format (YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="featured" type="boolean" required>
+  Whether this project should be featured
+</ParamField>
+
+<ParamField body="sortOrder" type="integer" required>
+  Display order for sorting projects
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated project entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/projects/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Advanced E-Commerce Platform",
+    "summary": "Enterprise-grade e-commerce solution with AI-powered recommendations",
+    "description": "Enhanced the platform with machine learning features...",
+    "repoUrl": "https://github.com/user/ecommerce",
+    "liveUrl": "https://demo.ecommerce.com",
+    "coverImage": "https://example.com/projects/ecommerce-v2.jpg",
+    "startDate": "2023-01-15",
+    "endDate": "2023-12-30",
+    "featured": true,
+    "sortOrder": 1
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Proyecto actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "title": "Advanced E-Commerce Platform",
+    "slug": "advanced-e-commerce-platform",
+    "summary": "Enterprise-grade e-commerce solution with AI-powered recommendations",
+    "description": "Enhanced the platform with machine learning features...",
+    "repoUrl": "https://github.com/user/ecommerce",
+    "liveUrl": "https://demo.ecommerce.com",
+    "coverImage": "https://example.com/projects/ecommerce-v2.jpg",
+    "startDate": "2023-01-15",
+    "endDate": "2023-12-30",
+    "featured": true,
+    "sortOrder": 1,
+    "skills": []
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Delete Project
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/projects/{id}
+```
+
+Delete a project entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Project ID to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/projects/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Proyecto eliminado exitosamente",
+  "data": null
+}
+```
+</CodeGroup>
+
+---
+
+## Associate Skills to Project
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/projects/{projectId}/skills
+```
+
+Associate multiple skills with a project.
+
+### Path Parameters
+
+<ParamField path="projectId" type="long" required>
+  Project ID to associate skills with
+</ParamField>
+
+### Request Body
+
+<ParamField body="skillIds" type="array" required>
+  Array of skill IDs to associate with the project
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated project with associated skills
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/projects/1/skills \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skillIds": [10, 15, 22]
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Skills asociados al proyecto exitosamente",
+  "data": {
+    "id": 1,
+    "title": "E-Commerce Platform",
+    "slug": "e-commerce-platform",
+    "summary": "Full-stack e-commerce solution with real-time inventory",
+    "description": "Built a scalable e-commerce platform...",
+    "repoUrl": "https://github.com/user/ecommerce",
+    "liveUrl": "https://demo.ecommerce.com",
+    "coverImage": "https://example.com/projects/ecommerce.jpg",
+    "startDate": "2023-01-15",
+    "endDate": "2023-06-30",
+    "featured": true,
+    "sortOrder": 1,
+    "skills": [
+      {
+        "id": 10,
+        "name": "Java",
+        "globalSkillId": 100,
+        "level": 90,
+        "icon": "java-icon"
+      },
+      {
+        "id": 15,
+        "name": "Spring Boot",
+        "globalSkillId": 105,
+        "level": 85,
+        "icon": "spring-icon"
+      },
+      {
+        "id": 22,
+        "name": "React",
+        "globalSkillId": 112,
+        "level": 80,
+        "icon": "react-icon"
+      }
+    ]
+  }
+}
+```
+</CodeGroup>

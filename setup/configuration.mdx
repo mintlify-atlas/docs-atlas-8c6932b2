@@ -1,0 +1,441 @@
+---
+title: Configuration
+description: Configure Portfolio Hub API with environment variables and application properties
+---
+
+Portfolio Hub API uses a combination of environment variables and Spring Boot application properties for configuration. This guide covers all available configuration options.
+
+## Configuration Overview
+
+The application uses `application.properties` as the base configuration file, with environment variables for sensitive and environment-specific values.
+
+<Note>
+  All sensitive credentials (database passwords, API keys, tokens) should be provided via environment variables, never hardcoded in configuration files.
+</Note>
+
+## Core Application Properties
+
+The base configuration is defined in `src/main/resources/application.properties`:
+
+```properties
+spring.application.name=portfolio
+server.port=8080
+
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.open-in-view=false
+spring.jpa.properties.hibernate.format_sql=true
+
+# Flyway Configuration
+spring.flyway.baseline-on-migrate=true
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+```
+
+### Key Settings Explained
+
+- **`spring.jpa.hibernate.ddl-auto=validate`** - Hibernate will validate the schema against entities but won't modify it. Flyway handles all schema changes.
+- **`spring.jpa.open-in-view=false`** - Disables OSIV (Open Session in View) for better performance and to avoid lazy loading issues.
+- **`spring.flyway.baseline-on-migrate=true`** - Allows Flyway to work with existing databases.
+
+## Environment Variables
+
+### Database Configuration
+
+Configure MySQL connection settings:
+
+```bash
+# MySQL Host
+export MYSQL_HOST=localhost
+
+# MySQL Port (defaults to 3306 if not set)
+export MYSQL_PORT=3306
+
+# Database Name
+export MYSQL_DATABASE=studiostkoh.portafolio
+
+# Database Credentials
+export MYSQL_USER=your_username
+export MYSQL_PASSWORD=your_secure_password
+```
+
+These variables are used in the DataSource configuration:
+
+```properties
+spring.datasource.url=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.username=${MYSQL_USER}
+spring.datasource.password=${MYSQL_PASSWORD}
+```
+
+<Warning>
+  The connection string includes `useSSL=false` for local development. In production, enable SSL and configure proper certificates.
+</Warning>
+
+### JWT Security Configuration
+
+Configure JSON Web Token authentication:
+
+```bash
+# JWT Secret Key (minimum 256 bits)
+export JWT_TOKEN=your_very_long_secret_key_at_least_256_bits
+
+# Token Expiration Time (in minutes)
+export JWT_EXPIRATION_TIME=60
+```
+
+Used in application properties:
+
+```properties
+application.security.jwt.secret-key=${JWT_TOKEN}
+application.security.jwt.expiration=${JWT_EXPIRATION_TIME}
+```
+
+<Note>
+  Generate a secure JWT secret key:
+  ```bash
+  openssl rand -base64 64
+  ```
+  The key should be at least 256 bits (32 bytes) for HS256 algorithm.
+</Note>
+
+### CORS Configuration
+
+Configure allowed origins for Cross-Origin Resource Sharing:
+
+```bash
+# Single origin
+export CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+# Multiple origins (comma-separated)
+export CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+```
+
+Referenced in:
+
+```properties
+application.security.cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
+```
+
+### Google Drive Configuration
+
+Portfolio Hub API integrates with Google Drive for file uploads (avatars, resumes, project covers, etc.).
+
+#### OAuth 2.0 Credentials
+
+```bash
+# OAuth Client ID from Google Cloud Console
+export DRIVE_OAUTH_CLIENT_ID=your_client_id.apps.googleusercontent.com
+
+# OAuth Client Secret
+export DRIVE_OAUTH_CLIENT_SECRET=your_client_secret
+
+# Refresh Token (obtained through OAuth flow)
+export DRIVE_OAUTH_REFRESH_TOKEN=your_refresh_token
+```
+
+Used in application properties:
+
+```properties
+google.drive.oauth.client-id=${DRIVE_OAUTH_CLIENT_ID}
+google.drive.oauth.client-secret=${DRIVE_OAUTH_CLIENT_SECRET}
+google.drive.oauth.refresh-token=${DRIVE_OAUTH_REFRESH_TOKEN}
+```
+
+<Steps>
+  <Step title="Create Google Cloud Project">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+    2. Create a new project or select existing one
+    3. Enable Google Drive API
+  </Step>
+  
+  <Step title="Create OAuth 2.0 Credentials">
+    1. Navigate to APIs & Services → Credentials
+    2. Create OAuth 2.0 Client ID
+    3. Choose "Desktop app" as application type
+    4. Download the credentials JSON
+  </Step>
+  
+  <Step title="Generate Refresh Token">
+    Use the OAuth 2.0 Playground or a custom script to obtain a refresh token with `https://www.googleapis.com/auth/drive.file` scope.
+  </Step>
+</Steps>
+
+#### Google Drive Folder IDs
+
+Configure folder IDs for organizing uploaded files:
+
+```bash
+# Folder for user avatar images
+export DRIVE_FOLDER_USER_AVATARS=folder_id_here
+
+# Folder for user resume PDFs
+export DRIVE_FOLDER_USER_RESUMES=folder_id_here
+
+# Folder for project cover images
+export DRIVE_FOLDER_PROJECTS_COVER=folder_id_here
+
+# Folder for skill icons
+export DRIVE_FOLDER_SKILLS_ICON=folder_id_here
+
+# Folder for certificate files
+export DRIVE_FOLDER_CERTIFICATES=folder_id_here
+```
+
+Mapped in application properties:
+
+```properties
+google.drive.folders.user-avatars=${DRIVE_FOLDER_USER_AVATARS}
+google.drive.folders.user-resumes=${DRIVE_FOLDER_USER_RESUMES}
+google.drive.folders.projects-cover=${DRIVE_FOLDER_PROJECTS_COVER}
+google.drive.folders.skills-icon=${DRIVE_FOLDER_SKILLS_ICON}
+google.drive.folders.certificates=${DRIVE_FOLDER_CERTIFICATES}
+```
+
+<Accordion title="How to get Google Drive Folder ID">
+  1. Open Google Drive in your browser
+  2. Navigate to the folder
+  3. The folder ID is in the URL:
+     ```
+     https://drive.google.com/drive/folders/FOLDER_ID_HERE
+     ```
+  4. Copy the `FOLDER_ID_HERE` part
+</Accordion>
+
+### Email/SMTP Configuration
+
+Configure email sending for contact forms and notifications:
+
+```bash
+# SMTP Server Host
+export SMTP_HOST=smtp.gmail.com
+
+# SMTP Server Port
+export SMTP_PORT=587
+
+# Email Address
+export GMAIL_APP_EMAIL=your.email@gmail.com
+
+# App Password (not your regular Gmail password)
+export GMAIL_APP_PASSWORD=your_app_password
+```
+
+Used in application properties:
+
+```properties
+spring.mail.host=${SMTP_HOST}
+spring.mail.port=${SMTP_PORT}
+spring.mail.username=${GMAIL_APP_EMAIL}
+spring.mail.password=${GMAIL_APP_PASSWORD}
+
+# JavaMail Properties
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+```
+
+<Accordion title="Getting a Gmail App Password">
+  1. Enable 2-Factor Authentication on your Google Account
+  2. Go to [Google Account Settings](https://myaccount.google.com/)
+  3. Navigate to Security → 2-Step Verification → App passwords
+  4. Generate a new app password for "Mail"
+  5. Use this 16-character password as `GMAIL_APP_PASSWORD`
+  
+  <Warning>
+    Never use your regular Gmail password. Always use an App Password.
+  </Warning>
+</Accordion>
+
+## Configuration Examples
+
+### Local Development
+
+Create a `.env` file in your project root:
+
+```bash
+# Database
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=studiostkoh.portafolio
+MYSQL_USER=portfolio_dev
+MYSQL_PASSWORD=dev_password_123
+
+# JWT
+JWT_TOKEN=dev_secret_key_change_in_production_min_256_bits
+JWT_EXPIRATION_TIME=60
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Google Drive (Optional for dev)
+DRIVE_OAUTH_CLIENT_ID=
+DRIVE_OAUTH_CLIENT_SECRET=
+DRIVE_OAUTH_REFRESH_TOKEN=
+DRIVE_FOLDER_USER_AVATARS=
+DRIVE_FOLDER_USER_RESUMES=
+DRIVE_FOLDER_PROJECTS_COVER=
+DRIVE_FOLDER_SKILLS_ICON=
+DRIVE_FOLDER_CERTIFICATES=
+
+# Email (Optional for dev)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+GMAIL_APP_EMAIL=
+GMAIL_APP_PASSWORD=
+```
+
+Load environment variables:
+
+```bash
+# Using direnv (recommended)
+echo 'dotenv' > .envrc
+direnv allow
+
+# Or manually source
+source .env
+
+# Or use with Maven
+./mvnw spring-boot:run
+```
+
+### Production
+
+<CodeGroup>
+```bash Docker
+# In docker-compose.yml or Dockerfile
+environment:
+  - MYSQL_HOST=production-db.example.com
+  - MYSQL_PORT=3306
+  - MYSQL_DATABASE=portfolio_prod
+  - MYSQL_USER=${DB_USER}
+  - MYSQL_PASSWORD=${DB_PASSWORD}
+  - JWT_TOKEN=${JWT_SECRET}
+  - JWT_EXPIRATION_TIME=30
+  - CORS_ALLOWED_ORIGINS=https://yourdomain.com
+```
+
+```bash Kubernetes
+# In a Kubernetes Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: portfolio-secrets
+type: Opaque
+stringData:
+  MYSQL_PASSWORD: "production_password"
+  JWT_TOKEN: "production_jwt_secret"
+  DRIVE_OAUTH_CLIENT_SECRET: "oauth_secret"
+  GMAIL_APP_PASSWORD: "app_password"
+```
+
+```bash Systemd
+# In /etc/systemd/system/portfolio-api.service
+[Service]
+Environment="MYSQL_HOST=localhost"
+Environment="MYSQL_DATABASE=portfolio_prod"
+Environment="MYSQL_USER=portfolio"
+Environment="MYSQL_PASSWORD=secure_password"
+Environment="JWT_TOKEN=production_jwt_secret_key"
+Environment="JWT_EXPIRATION_TIME=30"
+EnvironmentFile=/etc/portfolio-api/secrets.env
+```
+</CodeGroup>
+
+## Configuration Validation
+
+Portfolio Hub API will fail to start if required environment variables are missing. Check the startup logs for configuration errors:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Look for:
+
+```
+✓ Database connection established
+✓ Flyway migrations completed successfully
+✓ JWT configuration loaded
+✓ Application started on port 8080
+```
+
+## Advanced Configuration
+
+### Custom Server Port
+
+Override the default port (8080):
+
+```bash
+export SERVER_PORT=9090
+```
+
+Or via command line:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=9090
+```
+
+### Database Connection Pool
+
+For production, you may want to configure HikariCP (default connection pool):
+
+```properties
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+```
+
+### Logging Configuration
+
+Adjust logging levels:
+
+```properties
+logging.level.root=INFO
+logging.level.studios.tkoh.portfolio=DEBUG
+logging.level.org.springframework.security=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+```
+
+## Security Best Practices
+
+<Warning>
+  Follow these security guidelines for production deployments:
+</Warning>
+
+1. **Never commit secrets** - Use environment variables or secret management services
+2. **Rotate JWT secrets regularly** - Update `JWT_TOKEN` periodically
+3. **Use strong passwords** - Minimum 32 characters for JWT secret
+4. **Enable SSL for MySQL** - Configure SSL certificates for database connections
+5. **Limit CORS origins** - Only allow trusted domains
+6. **Use app passwords** - Never use regular Gmail passwords for SMTP
+7. **Secure Google Drive** - Limit OAuth scope to `drive.file` only
+8. **Environment isolation** - Use different credentials for dev/staging/production
+
+## Configuration Checklist
+
+Before running Portfolio Hub API, verify:
+
+- [ ] MySQL database is running and accessible
+- [ ] Database schema `studiostkoh.portafolio` exists
+- [ ] All required environment variables are set
+- [ ] JWT secret is at least 256 bits
+- [ ] CORS origins match your frontend URL(s)
+- [ ] Google Drive OAuth credentials are valid (if using file uploads)
+- [ ] Gmail App Password is configured (if using email features)
+- [ ] Flyway can connect and run migrations
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Database Setup" icon="database" href="/setup/database">
+    Learn about MySQL schema and Flyway migrations
+  </Card>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Set up JWT authentication and create users
+  </Card>
+  <Card title="File Uploads" icon="cloud-arrow-up" href="/guides/file-uploads">
+    Configure Google Drive integration
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore all available endpoints
+  </Card>
+</CardGroup>

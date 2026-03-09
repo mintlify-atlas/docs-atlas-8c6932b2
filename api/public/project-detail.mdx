@@ -1,0 +1,309 @@
+---
+title: "Get Project Detail"
+api: "GET /api/portfolios/{profileSlug}/projects/{projectSlug}"
+description: "Get detailed information about a specific project including full description and technologies used"
+---
+
+This endpoint returns complete details for a specific project within a portfolio. No authentication is required. Use this to display individual project pages with full descriptions and technical details.
+
+## Path Parameters
+
+<ParamField path="profileSlug" type="string" required>
+  The portfolio owner's unique slug (e.g., "john-doe")
+</ParamField>
+
+<ParamField path="projectSlug" type="string" required>
+  The project's unique URL-friendly identifier (e.g., "ecommerce-platform")
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A descriptive message about the response
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 timestamp of when the response was generated
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Complete project information
+  
+  <ResponseField name="id" type="integer" required>
+    Unique project identifier
+  </ResponseField>
+  
+  <ResponseField name="title" type="string" required>
+    Project title
+  </ResponseField>
+  
+  <ResponseField name="slug" type="string" required>
+    URL-friendly project identifier
+  </ResponseField>
+  
+  <ResponseField name="summary" type="string" required>
+    Brief project summary (short description)
+  </ResponseField>
+  
+  <ResponseField name="description" type="string">
+    Full detailed project description (may contain markdown or HTML)
+  </ResponseField>
+  
+  <ResponseField name="repoUrl" type="string">
+    URL to source code repository (e.g., GitHub, GitLab)
+  </ResponseField>
+  
+  <ResponseField name="liveUrl" type="string">
+    URL to live/deployed version of the project
+  </ResponseField>
+  
+  <ResponseField name="coverImage" type="string">
+    URL to project cover or hero image
+  </ResponseField>
+  
+  <ResponseField name="startDate" type="string">
+    Project start date in ISO 8601 format (YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="endDate" type="string">
+    Project end date in ISO 8601 format, or null if ongoing
+  </ResponseField>
+  
+  <ResponseField name="featured" type="boolean" required>
+    Whether this project is marked as featured
+  </ResponseField>
+  
+  <ResponseField name="sortOrder" type="integer" required>
+    Display order for sorting projects
+  </ResponseField>
+  
+  <ResponseField name="skills" type="array" required>
+    Technologies and skills used in this project
+    
+    <ResponseField name="id" type="integer">
+      Skill identifier
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Technology or skill name (e.g., "React", "PostgreSQL", "Docker")
+    </ResponseField>
+    
+    <ResponseField name="globalSkillId" type="integer">
+      Reference to global skill database
+    </ResponseField>
+    
+    <ResponseField name="level" type="integer">
+      Proficiency level with this technology (1-5)
+    </ResponseField>
+    
+    <ResponseField name="icon" type="string">
+      Icon identifier or URL for the skill
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.portfoliohub.com/api/portfolios/john-doe/projects/ecommerce-platform
+```
+
+```javascript JavaScript
+const profileSlug = 'john-doe';
+const projectSlug = 'ecommerce-platform';
+
+fetch(`https://api.portfoliohub.com/api/portfolios/${profileSlug}/projects/${projectSlug}`)
+  .then(response => response.json())
+  .then(project => {
+    console.log(project.data.title);
+    console.log(project.data.description);
+    console.log(project.data.skills);
+  });
+```
+
+```python Python
+import requests
+
+profile_slug = 'john-doe'
+project_slug = 'ecommerce-platform'
+
+url = f'https://api.portfoliohub.com/api/portfolios/{profile_slug}/projects/{project_slug}'
+response = requests.get(url)
+project = response.json()
+
+print(f"Title: {project['data']['title']}")
+print(f"Technologies: {[skill['name'] for skill in project['data']['skills']]}")
+```
+
+```java Java
+String profileSlug = "john-doe";
+String projectSlug = "ecommerce-platform";
+
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create(String.format(
+        "https://api.portfoliohub.com/api/portfolios/%s/projects/%s",
+        profileSlug, projectSlug)))
+    .GET()
+    .build();
+
+HttpResponse<String> response = client.send(request, 
+    HttpResponse.BodyHandlers.ofString());
+```
+
+```typescript TypeScript
+interface Skill {
+  id: number;
+  name: string;
+  globalSkillId: number;
+  level: number;
+  icon: string;
+}
+
+interface Project {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  description: string;
+  repoUrl: string;
+  liveUrl: string;
+  coverImage: string;
+  startDate: string;
+  endDate: string | null;
+  featured: boolean;
+  sortOrder: number;
+  skills: Skill[];
+}
+
+const getProjectDetail = async (
+  profileSlug: string, 
+  projectSlug: string
+): Promise<Project> => {
+  const response = await fetch(
+    `https://api.portfoliohub.com/api/portfolios/${profileSlug}/projects/${projectSlug}`
+  );
+  const json = await response.json();
+  return json.data;
+};
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "message": "Detalle del proyecto obtenido",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": {
+    "id": 42,
+    "title": "E-Commerce Platform",
+    "slug": "ecommerce-platform",
+    "summary": "A full-featured online shopping platform with payment integration and inventory management",
+    "description": "## Overview\n\nBuilt a comprehensive e-commerce solution from scratch using modern web technologies. The platform handles thousands of products and processes hundreds of transactions daily.\n\n## Key Features\n\n- User authentication and authorization\n- Product catalog with advanced search and filtering\n- Shopping cart and checkout flow\n- Stripe payment integration\n- Order tracking and history\n- Admin dashboard for inventory management\n- Responsive design for mobile and desktop\n\n## Technical Highlights\n\n- Implemented microservices architecture for scalability\n- Used Redis for caching and session management\n- Integrated Elasticsearch for fast product search\n- Deployed on AWS with auto-scaling capabilities\n- Achieved 99.9% uptime over 12 months",
+    "repoUrl": "https://github.com/johndoe/ecommerce-platform",
+    "liveUrl": "https://demo-ecommerce.example.com",
+    "coverImage": "https://storage.example.com/projects/ecommerce-cover.jpg",
+    "startDate": "2024-01-15",
+    "endDate": "2024-08-30",
+    "featured": true,
+    "sortOrder": 1,
+    "skills": [
+      {
+        "id": 1,
+        "name": "React",
+        "globalSkillId": 101,
+        "level": 5,
+        "icon": "react-icon"
+      },
+      {
+        "id": 2,
+        "name": "Spring Boot",
+        "globalSkillId": 105,
+        "level": 5,
+        "icon": "spring-icon"
+      },
+      {
+        "id": 3,
+        "name": "PostgreSQL",
+        "globalSkillId": 110,
+        "level": 4,
+        "icon": "postgresql-icon"
+      },
+      {
+        "id": 4,
+        "name": "Redis",
+        "globalSkillId": 112,
+        "level": 4,
+        "icon": "redis-icon"
+      },
+      {
+        "id": 5,
+        "name": "Docker",
+        "globalSkillId": 120,
+        "level": 4,
+        "icon": "docker-icon"
+      },
+      {
+        "id": 6,
+        "name": "AWS",
+        "globalSkillId": 125,
+        "level": 4,
+        "icon": "aws-icon"
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+### Portfolio Not Found
+
+```json
+{
+  "success": false,
+  "message": "Profile not found with slug: invalid-slug",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": null
+}
+```
+
+### Project Not Found
+
+```json
+{
+  "success": false,
+  "message": "Project not found",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": null
+}
+```
+
+## Use Cases
+
+- Display detailed project pages with full descriptions
+- Show project galleries with technical details
+- Build project showcase websites
+- Create portfolio comparison tools
+- Generate project reports or exports
+- Display technology stacks used in projects
+
+## Notes
+
+- No authentication required
+- Only returns projects from public portfolios
+- The `description` field may contain markdown or HTML formatting
+- `endDate` will be `null` for ongoing projects
+- Skills array shows all technologies used in the project with proficiency levels
+- Both `profileSlug` and `projectSlug` must be valid for the request to succeed
+- The `featured` flag can be used to highlight important projects
+- Projects are sorted using the `sortOrder` field when displaying multiple projects

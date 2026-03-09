@@ -1,0 +1,720 @@
+---
+title: 'Managing Portfolio'
+description: 'Complete guide to managing your professional portfolio with CRUD operations'
+icon: 'briefcase'
+---
+
+This guide covers all CRUD operations for managing your portfolio content including profile, experience, education, projects, and skills.
+
+<Note>
+All endpoints in this guide require authentication. See the [Authentication Guide](/guides/authentication) for details on obtaining and using JWT tokens.
+</Note>
+
+## Profile Management
+
+Your profile is the core of your portfolio, containing personal information and contact details.
+
+### Get My Profile
+
+Retrieve your current profile information:
+
+```bash
+GET /api/me/profile
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Perfil obtenido exitosamente",
+  "data": {
+    "id": 1,
+    "fullName": "John Doe",
+    "headline": "Full Stack Developer",
+    "bio": "Passionate developer with 5+ years of experience...",
+    "contactEmail": "john@example.com",
+    "location": "San Francisco, CA",
+    "avatarUrl": "https://drive.google.com/uc?export=view&id=...",
+    "resumeUrl": "https://drive.google.com/uc?export=view&id=...",
+    "slug": "john-doe"
+  }
+}
+```
+
+### Update Profile
+
+Update your profile information using the endpoint from `MeController.java:40-51`:
+
+```bash
+PUT /api/me/profile
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body** (`ProfileUpdateRequest.java`):
+```json
+{
+  "fullName": "John Doe",
+  "headline": "Senior Full Stack Developer",
+  "bio": "Passionate developer specializing in Spring Boot and React...",
+  "contactEmail": "john@example.com",
+  "location": "San Francisco, CA"
+}
+```
+
+**Validation Rules:**
+- `fullName`: Required, max 120 characters
+- `headline`: Required, max 160 characters
+- `bio`: Required, max 5000 characters
+- `contactEmail`: Required, valid email format, max 160 characters
+- `location`: Optional, max 100 characters
+
+### Update Contact Email
+
+Update only the contact email separately:
+
+```bash
+PUT /api/me/settings/contact-email
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "email": "newemail@example.com"
+}
+```
+
+## Experience Management
+
+Manage your work experience with full CRUD operations. See `ExperienceController.java` for implementation.
+
+### List All Experiences
+
+```bash
+GET /api/me/experience
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Experiencias obtenidas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "company": "Tech Corp",
+      "role": "Senior Developer",
+      "location": "Remote",
+      "startDate": "2020-01-15",
+      "endDate": null,
+      "current": true,
+      "description": "Leading development of microservices architecture..."
+    }
+  ]
+}
+```
+
+### Get Single Experience
+
+```bash
+GET /api/me/experience/{id}
+Authorization: Bearer {token}
+```
+
+### Create Experience
+
+Add a new work experience entry:
+
+```bash
+POST /api/me/experience
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body** (`ExperienceCreateRequest.java`):
+```json
+{
+  "company": "Tech Corp",
+  "role": "Senior Full Stack Developer",
+  "location": "San Francisco, CA",
+  "startDate": "2020-01-15",
+  "endDate": null,
+  "current": true,
+  "description": "Leading development of microservices architecture using Spring Boot and React. Mentoring junior developers and implementing CI/CD pipelines."
+}
+```
+
+**Validation Rules:**
+- `company`: Required, max 150 characters
+- `role`: Required, max 150 characters
+- `location`: Optional, max 100 characters
+- `startDate`: Required, ISO date format
+- `endDate`: Optional, ISO date format
+- `current`: Required boolean
+- `description`: Optional, max 65535 characters
+
+### Update Experience
+
+<Tabs>
+  <Tab title="PUT with ID in path">
+    ```bash
+    PUT /api/me/experience/{id}
+    Authorization: Bearer {token}
+    Content-Type: application/json
+    ```
+
+    **Request Body:**
+    ```json
+    {
+      "company": "Tech Corp",
+      "role": "Staff Engineer",
+      "location": "Remote",
+      "startDate": "2020-01-15",
+      "endDate": null,
+      "current": true,
+      "description": "Updated description..."
+    }
+    ```
+  </Tab>
+
+  <Tab title="PUT with ID in body">
+    ```bash
+    PUT /api/me/experience
+    Authorization: Bearer {token}
+    Content-Type: application/json
+    ```
+
+    **Request Body:**
+    ```json
+    {
+      "id": 1,
+      "company": "Tech Corp",
+      "role": "Staff Engineer",
+      "location": "Remote",
+      "startDate": "2020-01-15",
+      "endDate": null,
+      "current": true,
+      "description": "Updated description..."
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Delete Experience
+
+```bash
+DELETE /api/me/experience/{id}
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Experiencia eliminada exitosamente"
+}
+```
+
+## Education Management
+
+Manage your educational background. Implementation in `EducationController.java`.
+
+### List All Education
+
+```bash
+GET /api/me/education
+Authorization: Bearer {token}
+```
+
+### Create Education
+
+```bash
+POST /api/me/education
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body** (`EducationCreateRequest.java`):
+```json
+{
+  "institution": "Stanford University",
+  "degree": "Bachelor of Science",
+  "field": "Computer Science",
+  "startDate": "2015-09-01",
+  "endDate": "2019-06-15",
+  "description": "Focused on distributed systems and machine learning. GPA: 3.8/4.0"
+}
+```
+
+**Validation Rules:**
+- `institution`: Required, max 150 characters
+- `degree`: Required, max 150 characters
+- `field`: Optional, max 150 characters
+- `startDate`: Required, ISO date format
+- `endDate`: Optional, ISO date format
+- `description`: Optional, max 65535 characters
+
+### Update Education
+
+```bash
+PUT /api/me/education/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+### Delete Education
+
+```bash
+DELETE /api/me/education/{id}
+Authorization: Bearer {token}
+```
+
+## Project Management
+
+Showcase your projects with detailed information. See `ProjectMeController.java` for implementation.
+
+### List All Projects
+
+```bash
+GET /api/me/projects
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Proyectos obtenidos exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "title": "E-Commerce Platform",
+      "slug": "e-commerce-platform",
+      "summary": "Full-stack e-commerce solution with Spring Boot and React",
+      "description": "Built a scalable e-commerce platform...",
+      "repoUrl": "https://github.com/johndoe/ecommerce",
+      "liveUrl": "https://ecommerce-demo.example.com",
+      "coverImage": "https://drive.google.com/uc?export=view&id=...",
+      "startDate": "2023-01-01",
+      "endDate": "2023-06-30",
+      "featured": true,
+      "sortOrder": 1,
+      "skills": [
+        {
+          "id": 1,
+          "name": "Spring Boot",
+          "level": 90,
+          "icon": "https://..."
+        },
+        {
+          "id": 2,
+          "name": "React",
+          "level": 85,
+          "icon": "https://..."
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Get Single Project
+
+```bash
+GET /api/me/projects/{id}
+Authorization: Bearer {token}
+```
+
+### Create Project
+
+```bash
+POST /api/me/projects
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body** (`ProjectCreateRequest.java`):
+```json
+{
+  "title": "Portfolio Hub API",
+  "summary": "RESTful API for managing professional portfolios",
+  "description": "A comprehensive Spring Boot API with JWT authentication, Google Drive integration, and email notifications. Features include user management, portfolio CRUD operations, and public API access.",
+  "repoUrl": "https://github.com/johndoe/portfolio-api",
+  "liveUrl": "https://api.portfolio.example.com",
+  "coverImage": null,
+  "startDate": "2024-01-01",
+  "endDate": null,
+  "featured": true,
+  "sortOrder": 1
+}
+```
+
+**Validation Rules:**
+- `title`: Required, max 140 characters
+- `summary`: Required, max 280 characters
+- `description`: Optional, max 65535 characters
+- `repoUrl`: Optional, max 512 characters
+- `liveUrl`: Optional, max 512 characters
+- `coverImage`: Optional, max 512 characters
+- `startDate`: Optional, ISO date format
+- `endDate`: Optional, ISO date format
+- `featured`: Required boolean
+- `sortOrder`: Required integer
+
+### Update Project
+
+```bash
+PUT /api/me/projects/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+### Delete Project
+
+```bash
+DELETE /api/me/projects/{id}
+Authorization: Bearer {token}
+```
+
+### Associate Skills to Project
+
+Link existing skills to a project from `ProjectMeController.java:83-90`:
+
+```bash
+POST /api/me/projects/{projectId}/skills
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "skillIds": [1, 2, 5, 8]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Skills asociados al proyecto exitosamente",
+  "data": {
+    "id": 1,
+    "title": "Portfolio Hub API",
+    "skills": [
+      { "id": 1, "name": "Spring Boot", "level": 90 },
+      { "id": 2, "name": "React", "level": 85 },
+      { "id": 5, "name": "PostgreSQL", "level": 80 },
+      { "id": 8, "name": "Docker", "level": 75 }
+    ]
+  }
+}
+```
+
+## Skills Management
+
+Skills are organized into categories. Each category can contain multiple skills. See `SkillMeController.java` for full implementation.
+
+### List All Skill Categories
+
+```bash
+GET /api/me/skill-categories
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Categorías de skills obtenidas",
+  "data": [
+    {
+      "id": 1,
+      "name": "Backend Development",
+      "sortOrder": 1,
+      "skills": [
+        {
+          "id": 1,
+          "name": "Spring Boot",
+          "level": 90,
+          "icon": "https://drive.google.com/uc?export=view&id=...",
+          "sortOrder": 1
+        },
+        {
+          "id": 2,
+          "name": "Node.js",
+          "level": 75,
+          "icon": "https://drive.google.com/uc?export=view&id=...",
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Frontend Development",
+      "sortOrder": 2,
+      "skills": [
+        {
+          "id": 3,
+          "name": "React",
+          "level": 85,
+          "icon": "https://drive.google.com/uc?export=view&id=...",
+          "sortOrder": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Get Single Category
+
+```bash
+GET /api/me/skill-categories/{categoryId}
+Authorization: Bearer {token}
+```
+
+### Batch Create Skill Categories
+
+Create multiple categories at once:
+
+```bash
+POST /api/me/skill-categories/batch
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+[
+  {
+    "name": "Backend Development",
+    "sortOrder": 1
+  },
+  {
+    "name": "Frontend Development",
+    "sortOrder": 2
+  },
+  {
+    "name": "DevOps",
+    "sortOrder": 3
+  }
+]
+```
+
+### Batch Update Skill Categories
+
+```bash
+PUT /api/me/skill-categories/batch
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Backend & APIs",
+    "sortOrder": 1
+  },
+  {
+    "id": 2,
+    "name": "Frontend & UI",
+    "sortOrder": 2
+  }
+]
+```
+
+### Batch Delete Skill Categories
+
+```bash
+DELETE /api/me/skill-categories/batch
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "ids": [1, 2, 3]
+}
+```
+
+### Get Skills for Category
+
+```bash
+GET /api/me/skill-categories/{categoryId}/skills
+Authorization: Bearer {token}
+```
+
+### Batch Create Skills
+
+Add multiple skills to a category:
+
+```bash
+POST /api/me/skill-categories/{categoryId}/skills/batch
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body** (`SkillCreateRequest.java`):
+```json
+[
+  {
+    "name": "Spring Boot",
+    "level": 90,
+    "icon": null,
+    "sortOrder": 1
+  },
+  {
+    "name": "PostgreSQL",
+    "level": 80,
+    "icon": null,
+    "sortOrder": 2
+  },
+  {
+    "name": "MongoDB",
+    "level": 75,
+    "icon": null,
+    "sortOrder": 3
+  }
+]
+```
+
+**Validation Rules per Skill:**
+- `name`: Required, max 80 characters
+- `level`: Required, integer between 0-100
+- `icon`: Optional, max 255 characters
+- `sortOrder`: Required integer
+
+### Batch Update Skills
+
+```bash
+PUT /api/me/skill-categories/{categoryId}/skills/batch
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Spring Boot",
+    "level": 95,
+    "icon": "https://drive.google.com/uc?export=view&id=...",
+    "sortOrder": 1
+  }
+]
+```
+
+### Batch Delete Skills
+
+```bash
+DELETE /api/me/skill-categories/{categoryId}/skills/batch
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "ids": [1, 2, 3]
+}
+```
+
+### Search Global Skills
+
+Search for pre-defined skills in the global database:
+
+```bash
+GET /api/me/skill-categories/search?query=java
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Resultados de búsqueda",
+  "data": [
+    {
+      "id": 1,
+      "name": "Java",
+      "icon": "https://cdn.example.com/java.svg"
+    },
+    {
+      "id": 2,
+      "name": "JavaScript",
+      "icon": "https://cdn.example.com/javascript.svg"
+    }
+  ]
+}
+```
+
+## Common Response Format
+
+All API responses follow a consistent structure:
+
+```java
+public class ApiResponse<T> {
+    private boolean success;
+    private String message;
+    private T data;
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": { /* response data */ }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Error message describing what went wrong",
+  "data": null
+}
+```
+
+## Best Practices
+
+<Warning>
+**Important Tips:**
+
+1. **Use batch operations** when creating/updating multiple items to reduce API calls
+2. **Set appropriate sort orders** to control the display order on your portfolio
+3. **Keep descriptions concise** but informative for better user experience
+4. **Mark current positions** with `current: true` for experience entries
+5. **Associate skills with projects** to showcase your technical expertise
+</Warning>
+
+<Note>
+**Performance Considerations:**
+
+- All operations are scoped to the authenticated user automatically
+- Batch operations are transactional - they either all succeed or all fail
+- Skills can be reused across multiple projects
+- Use the search endpoint to find existing global skills before creating new ones
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="File Uploads" icon="upload" href="/guides/file-uploads">
+    Upload avatars, resumes, project covers, and skill icons
+  </Card>
+  <Card title="Public API" icon="globe" href="/guides/public-api">
+    Learn how others can view your portfolio without authentication
+  </Card>
+</CardGroup>

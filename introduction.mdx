@@ -1,0 +1,118 @@
+---
+title: "Introduction"
+description: "A Spring Boot REST API for managing and exposing professional portfolios"
+---
+
+## Welcome to Portfolio Hub API
+
+Portfolio Hub API is a comprehensive backend solution built with Spring Boot 3 that enables developers to create, manage, and publicly expose professional portfolios. Whether you're building a personal portfolio site or a multi-tenant platform, this API provides all the tools you need.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running with Portfolio Hub API in minutes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the complete API documentation
+  </Card>
+  <Card title="Authentication Guide" icon="shield" href="/guides/authentication">
+    Learn about JWT-based authentication
+  </Card>
+  <Card title="Deploy with Docker" icon="docker" href="/deployment/docker">
+    Deploy your API in a containerized environment
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="JWT Authentication" icon="key">
+    Secure your API with Spring Security and JSON Web Tokens
+  </Card>
+  <Card title="Portfolio Management" icon="briefcase">
+    Complete CRUD operations for profiles, experiences, education, projects, skills, and certificates
+  </Card>
+  <Card title="Google Drive Integration" icon="cloud">
+    Upload and manage files (avatars, resumes, project covers) directly to Google Drive
+  </Card>
+  <Card title="Public API" icon="globe">
+    Expose portfolios publicly for frontend consumption without authentication
+  </Card>
+  <Card title="Email Notifications" icon="envelope">
+    Send contact form emails via SMTP integration
+  </Card>
+  <Card title="Database Migrations" icon="database">
+    Manage schema changes with Flyway migrations
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+Portfolio Hub API is built with modern Java technologies:
+
+- **Spring Boot 3** - Core framework with dependency injection and auto-configuration
+- **Spring Security 6** - JWT-based authentication and authorization
+- **Spring Data JPA** - Object-relational mapping with Hibernate
+- **MySQL** - Relational database for persistent storage
+- **Flyway** - Version-controlled database migrations
+- **Google Drive API** - Cloud storage for uploaded files
+- **MapStruct** - Type-safe DTO mapping
+- **Lombok** - Reduced boilerplate code
+
+## API Endpoints
+
+The API is organized into several logical groups:
+
+### Authentication
+Register new users and authenticate with JWT tokens.
+
+- `POST /api/auth/register` - Create a new user account
+- `POST /api/auth/login` - Authenticate and receive a JWT token
+
+### Portfolio Management
+Authenticated endpoints for managing your portfolio (`/api/me/**`).
+
+- Profile, Experience, Education
+- Certificates, Projects, Skills
+- Social Links
+
+### Public Endpoints
+Publicly accessible endpoints for viewing portfolios (`/api/portfolios/**`).
+
+- List all portfolios
+- View portfolio details
+- View project details
+- Submit contact forms
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Personal Portfolio Backend">
+    Use Portfolio Hub API as the backend for your personal portfolio website. Manage your professional information through authenticated endpoints and expose it publicly for your frontend.
+  </Accordion>
+  <Accordion title="Multi-Tenant Portfolio Platform">
+    Build a platform where multiple users can create and manage their own portfolios. Each user gets their own authenticated space while their portfolios remain publicly accessible.
+  </Accordion>
+  <Accordion title="Resume Management System">
+    Leverage the structured data model for experiences, education, and skills to build a comprehensive resume management system with file upload capabilities.
+  </Accordion>
+  <Accordion title="Professional Network">
+    Create a professional networking platform where users can showcase their work, projects, and credentials with built-in contact functionality.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Steps>
+  <Step title="Set Up Your Environment">
+    Install Java 21, Maven, and MySQL. Follow the [installation guide](/setup/installation).
+  </Step>
+  <Step title="Configure the Application">
+    Set up environment variables for database, JWT, Google Drive, and email. See [configuration](/setup/configuration).
+  </Step>
+  <Step title="Run Your First Request">
+    Start the server and make your first API call. Check out the [quickstart guide](/quickstart).
+  </Step>
+  <Step title="Explore the API">
+    Dive into the full API reference to understand all available endpoints and their parameters.
+  </Step>
+</Steps>

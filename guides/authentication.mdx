@@ -1,0 +1,431 @@
+---
+title: 'Authentication'
+description: 'Learn how to authenticate users with JWT tokens in Portfolio Hub API'
+icon: 'key'
+---
+
+Portfolio Hub API uses **JWT (JSON Web Tokens)** for secure authentication. This guide covers registration, login, and how to use tokens to access protected endpoints.
+
+## Overview
+
+The authentication system is built with:
+- **Spring Security** for security configuration
+- **JWT** for stateless authentication
+- **BCrypt** for password hashing
+- **Custom filters** for token validation
+
+## Security Configuration
+
+The API implements a stateless session policy with JWT-based authentication. Here's the core security setup from `SecurityConfig.java:40-61`:
+
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/").permitAll()
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/portfolios/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/portfolios/*/contact").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/skills").permitAll()
+            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+            .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+            .requestMatchers("/api/me/**").authenticated()
+            .anyRequest().authenticated()
+        )
+        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authenticationProvider(authenticationProvider)
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}
+```
+
+### Public Endpoints
+
+The following endpoints do **not** require authentication:
+- `/api/auth/register` - User registration
+- `/api/auth/login` - User login
+- `/api/portfolios/**` (GET only) - Public portfolio viewing
+- `/api/portfolios/*/contact` (POST) - Contact form submission
+
+### Protected Endpoints
+
+All `/api/me/**` endpoints require a valid JWT token.
+
+## User Registration
+
+<Steps>
+  <Step title="Send Registration Request">
+    Create a new user account by sending a POST request to `/api/auth/register`:
+
+    ```bash
+    curl -X POST https://api.example.com/api/auth/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "fullName": "John Doe",
+        "email": "john@example.com",
+        "password": "SecurePass123"
+      }'
+    ```
+
+    **Request Body Schema** (`RegisterRequest.java`):
+    ```java
+    public record RegisterRequest(
+        @NotBlank
+        @Size(min = 3, max = 120)
+        String fullName,
+        
+        @NotBlank
+        @Email
+        @Size(max = 150)
+        String email,
+        
+        @NotBlank
+        @Size(min = 8, max = 100)
+        String password
+    )
+    ```
+  </Step>
+
+  <Step title="Receive JWT Token">
+    On successful registration, you'll receive a JWT token:
+
+    ```json
+    {
+      "success": true,
+      "message": "Usuario registrado exitosamente",
+      "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Automatic Profile Creation">
+    The registration process automatically creates:
+    - A **User** account with encrypted password
+    - A **Profile** with default values
+    - A unique **slug** generated from the full name
+
+    From `AuthServiceImpl.java:38-70`:
+    ```java
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
+            throw new IllegalStateException("El correo ya está en uso. Por favor intente otro.");
+        }
+
+        Profile profile = new Profile();
+        profile.setFullName(request.fullName());
+        profile.setContactEmail(request.email());
+        profile.setBio("¡Bienvenid@ a mi portafolio!");
+        profile.setHeadline("Desarrollador de Software");
+
+        String baseSlug = request.fullName().toLowerCase()
+                .replaceAll("\\s+", "-")
+                .replaceAll("[^a-z0-9\\-]", "");
+        String finalSlug = generateUniqueSlug(baseSlug);
+        profile.setSlug(finalSlug);
+
+        User user = User.builder()
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .roles("ROLE_USER")
+                .build();
+
+        profile.setUser(user);
+        user.setProfile(profile);
+
+        userRepository.save(user);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String jwtToken = jwtService.generateToken(userDetails);
+        return new AuthResponse(jwtToken);
+    }
+    ```
+  </Step>
+</Steps>
+
+## User Login
+
+<Steps>
+  <Step title="Send Login Request">
+    Authenticate with your credentials:
+
+    ```bash
+    curl -X POST https://api.example.com/api/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "john@example.com",
+        "password": "SecurePass123"
+      }'
+    ```
+
+    **Request Body Schema** (`LoginRequest.java`):
+    ```java
+    public record LoginRequest(
+        @NotBlank
+        @Email
+        String email,
+        
+        @NotBlank
+        String password
+    )
+    ```
+  </Step>
+
+  <Step title="Receive JWT Token">
+    On successful authentication:
+
+    ```json
+    {
+      "success": true,
+      "message": "Login exitoso",
+      "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## JWT Token Structure
+
+The JWT token includes custom claims for easy access to user data. From `JwtService.java:47-58`:
+
+```java
+public String generateToken(UserDetails userDetails) {
+    if (!(userDetails instanceof CustomUserDetails customUserDetails)) {
+        throw new IllegalArgumentException("UserDetails must be an instance of CustomUserDetails");
+    }
+
+    Map<String, Object> extraClaims = new HashMap<>();
+    extraClaims.put("profileId", customUserDetails.getProfileId());
+    extraClaims.put("userId", customUserDetails.getUserId());
+
+    return this.generateToken(extraClaims, userDetails);
+}
+```
+
+**Token Claims:**
+- `sub` - User email (subject)
+- `profileId` - User's profile ID
+- `userId` - User ID
+- `iat` - Issued at timestamp
+- `exp` - Expiration timestamp
+
+## Using JWT Tokens
+
+### Making Authenticated Requests
+
+Include the JWT token in the `Authorization` header with the `Bearer` scheme:
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.example.com/api/me/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/me/profile', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+```python Python
+import requests
+
+headers = {
+    'Authorization': f'Bearer {token}',
+    'Content-Type': 'application/json'
+}
+
+response = requests.get('https://api.example.com/api/me/profile', headers=headers)
+```
+
+```java Java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.example.com/api/me/profile"))
+    .header("Authorization", "Bearer " + token)
+    .header("Content-Type", "application/json")
+    .GET()
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+</CodeGroup>
+
+### JWT Authentication Filter
+
+The `JwtAuthenticationFilter` intercepts all requests and validates tokens. From `JwtAuthenticationFilter.java:30-67`:
+
+```java
+@Override
+protected void doFilterInternal(
+        @NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response,
+        @NonNull FilterChain filterChain
+) throws ServletException, IOException {
+
+    final String authHeader = request.getHeader("Authorization");
+    final String jwt;
+    final String userEmail;
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    jwt = authHeader.substring(7);
+    userEmail = jwtService.extractUsername(jwt);
+
+    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+        if (jwtService.isTokenValid(jwt, userDetails)) {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+            );
+            authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
+```
+
+## Configuration
+
+Configure JWT settings in your `application.properties`:
+
+```properties
+# JWT Configuration
+application.security.jwt.secret-key=${JWT_TOKEN}
+application.security.jwt.expiration=${JWT_EXPIRATION_TIME}
+
+# CORS Configuration
+application.security.cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
+```
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|----------|
+| `JWT_TOKEN` | Secret key for signing tokens (min 256 bits) | `your-256-bit-secret-key-here` |
+| `JWT_EXPIRATION_TIME` | Token expiration time in minutes | `1440` (24 hours) |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed origins | `http://localhost:3000,https://app.example.com` |
+
+<Note>
+The JWT secret key must be at least 256 bits (32 characters) for HS256 algorithm security.
+</Note>
+
+## Token Validation
+
+Tokens are validated on every protected request:
+
+```java
+public boolean isTokenValid(String token, UserDetails userDetails) {
+    final String username = extractUsername(token);
+    return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+}
+
+private boolean isTokenExpired(String token) {
+    return extractExpiration(token).before(new Date());
+}
+```
+
+## Error Handling
+
+### Common Authentication Errors
+
+<Tabs>
+  <Tab title="Invalid Credentials">
+    **Status:** `401 Unauthorized`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Bad credentials"
+    }
+    ```
+    
+    **Cause:** Incorrect email or password during login.
+  </Tab>
+
+  <Tab title="Email Already Exists">
+    **Status:** `400 Bad Request`
+    
+    ```json
+    {
+      "success": false,
+      "message": "El correo ya está en uso. Por favor intente otro."
+    }
+    ```
+    
+    **Cause:** Attempting to register with an email that's already registered.
+  </Tab>
+
+  <Tab title="Missing Token">
+    **Status:** `403 Forbidden`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Access Denied"
+    }
+    ```
+    
+    **Cause:** No Authorization header or invalid Bearer token format.
+  </Tab>
+
+  <Tab title="Expired Token">
+    **Status:** `403 Forbidden`
+    
+    ```json
+    {
+      "success": false,
+      "message": "JWT token has expired"
+    }
+    ```
+    
+    **Cause:** Token has passed its expiration time. User needs to login again.
+  </Tab>
+</Tabs>
+
+## Security Best Practices
+
+<Warning>
+**Important Security Considerations:**
+
+1. **Never share your JWT secret key** - Keep it secure and use environment variables
+2. **Use HTTPS in production** - Tokens sent over HTTP can be intercepted
+3. **Set appropriate expiration times** - Balance security with user experience
+4. **Implement token refresh** - For long-lived sessions (not yet implemented in this API)
+5. **Validate password strength** - Minimum 8 characters required by default
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Managing Portfolio" icon="briefcase" href="/guides/managing-portfolio">
+    Learn how to manage profile, experience, education, projects, and skills
+  </Card>
+  <Card title="File Uploads" icon="upload" href="/guides/file-uploads">
+    Upload avatars, resumes, and project images to Google Drive
+  </Card>
+</CardGroup>

@@ -1,0 +1,180 @@
+---
+title: 'Register User'
+api: 'POST /api/auth/register'
+description: 'Create a new user account and receive an authentication token'
+---
+
+## Endpoint
+
+```
+POST /api/auth/register
+```
+
+Registers a new user in the Portfolio Hub system. Upon successful registration, returns an authentication token that can be used for subsequent authenticated requests.
+
+## Request Body
+
+<ParamField body="fullName" type="string" required>
+  The full name of the user.
+  
+  **Validations:**
+  - Must not be blank
+  - Minimum length: 3 characters
+  - Maximum length: 120 characters
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  The email address of the user. Must be unique in the system.
+  
+  **Validations:**
+  - Must not be blank
+  - Must be a valid email format
+  - Maximum length: 150 characters
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The password for the user account.
+  
+  **Validations:**
+  - Must not be blank
+  - Minimum length: 8 characters
+  - Maximum length: 100 characters
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A human-readable message describing the result. Returns "Usuario registrado exitosamente" on success.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The authentication response data.
+  
+  <ResponseField name="token" type="string">
+    JWT authentication token to be used in subsequent requests.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  ISO 8601 timestamp of when the response was generated.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullName": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.portfoliohub.com/api/auth/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    fullName: 'John Doe',
+    email: 'john.doe@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+console.log(data.data.token);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.portfoliohub.com/api/auth/register',
+    json={
+        'fullName': 'John Doe',
+        'email': 'john.doe@example.com',
+        'password': 'securePassword123'
+    }
+)
+
+data = response.json()
+print(data['data']['token'])
+```
+
+```java Java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.portfoliohub.com/api/auth/register"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(
+        "{\"fullName\":\"John Doe\",\"email\":\"john.doe@example.com\",\"password\":\"securePassword123\"}"
+    ))
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
+</CodeGroup>
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Usuario registrado exitosamente",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+  },
+  "timestamp": "2026-03-09T14:30:00.123Z"
+}
+```
+
+## Error Responses
+
+### Validation Error (400 Bad Request)
+
+Returned when request body fails validation constraints.
+
+```json
+{
+  "success": false,
+  "message": "Error de validación",
+  "data": {
+    "email": "must be a well-formed email address",
+    "password": "size must be between 8 and 100",
+    "fullName": "must not be blank"
+  },
+  "timestamp": "2026-03-09T14:30:00.123Z"
+}
+```
+
+### Email Already Exists (409 Conflict)
+
+Returned when attempting to register with an email that already exists in the system.
+
+```json
+{
+  "success": false,
+  "message": "Email already registered",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.123Z"
+}
+```
+
+## Status Codes
+
+| Status Code | Description |
+|------------|-------------|
+| 200 | User successfully registered and token generated |
+| 400 | Invalid request body or validation errors |
+| 409 | Email address already exists in the system |
+| 500 | Internal server error |

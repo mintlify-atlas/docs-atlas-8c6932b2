@@ -1,0 +1,410 @@
+---
+title: 'Docker Deployment'
+description: 'Deploy Portfolio Hub API using Docker and Docker Compose'
+icon: 'docker'
+---
+
+## Overview
+
+Portfolio Hub API uses a multi-stage Docker build for optimal performance and security. The application is containerized with MySQL database support via Docker Compose.
+
+<Note>
+The multi-stage build reduces the final image size by excluding build tools and only including the runtime environment.
+</Note>
+
+---
+
+## Prerequisites
+
+Before deploying with Docker, ensure you have:
+
+<Steps>
+  <Step title="Install Docker">
+    Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop) for your operating system.
+  </Step>
+  
+  <Step title="Install Docker Compose">
+    Docker Compose is included with Docker Desktop. For Linux, install it separately:
+    ```bash
+    sudo apt-get update
+    sudo apt-get install docker-compose-plugin
+    ```
+  </Step>
+  
+  <Step title="Verify Installation">
+    Check that Docker and Docker Compose are properly installed:
+    ```bash
+    docker --version
+    docker compose version
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Dockerfile Architecture
+
+The Portfolio Hub API uses a **multi-stage Docker build** with two stages:
+
+### Stage 1: Build Stage
+
+This stage compiles the Spring Boot application using Maven:
+
+```dockerfile
+# --- Etapa 1: BUILD ---
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+
+# 1. Optimización de Capa de Caché de Docker:
+COPY pom.xml .
+
+# 2. Descargamos todas las dependencias.
+RUN mvn dependency:go-offline
+
+# 3. Copiamos el código fuente de la aplicación.
+COPY src ./src
+
+# 4. Compilamos la aplicación y creamos el .jar.
+RUN mvn package -DskipTests
+```
+
+<Accordion title="Why use dependency caching?">
+By copying `pom.xml` first and running `mvn dependency:go-offline`, Docker caches the dependencies layer. This means subsequent builds only re-download dependencies if `pom.xml` changes, significantly speeding up build times.
+</Accordion>
+
+### Stage 2: Production Stage
+
+This stage creates a minimal runtime image:
+
+```dockerfile
+# --- Etapa 2: PRODUCTION ---
+FROM eclipse-temurin:21-jre-jammy AS production
+WORKDIR /app
+
+# Definimos el puerto de la aplicación como un argumento.
+ARG APP_PORT=8080
+ENV PORT=${APP_PORT}
+
+# Expone el puerto 8080 del contenedor a la red interna de Docker.
+EXPOSE ${APP_PORT}
+
+# 1. Mejor Práctica de Seguridad: Crear un usuario no privilegiado.
+RUN addgroup --system spring && adduser --system --ingroup spring springuser
+USER springuser
+
+# 2. Copiamos el artefacto.jar compilado desde la etapa 'build'.
+COPY --from=build /app/target/*.jar app.jar
+
+# 3. ENTRYPOINT (Forma Exec):
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+<Warning>
+The production stage uses a **JRE-only image** (not JDK) and runs as a **non-root user** for enhanced security.
+</Warning>
+
+---
+
+## Building the Docker Image
+
+### Build Manually
+
+To build the Docker image manually:
+
+```bash
+docker build -t portfolio-hub-api:latest .
+```
+
+<Accordion title="Build with custom port">
+```bash
+docker build --build-arg APP_PORT=9090 -t portfolio-hub-api:latest .
+```
+</Accordion>
+
+### Verify the Image
+
+Check that the image was created successfully:
+
+```bash
+docker images | grep portfolio-hub-api
+```
+
+---
+
+## Running with Docker Compose
+
+The recommended way to run Portfolio Hub API is using Docker Compose, which orchestrates both the application and MySQL database.
+
+### Docker Compose Configuration
+
+```yaml
+version: '3.8'
+services:
+  portfolio-api:
+    build: .
+    container_name: portfolio-api-container
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - mysql-db
+  mysql-db:
+    image: 'mysql:8.0'
+    container_name: mysql-db-container
+    restart: unless-stopped
+    ports:
+      - '3307:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      MYSQL_DATABASE: '${MYSQL_DATABASE}'
+      MYSQL_USER: '${MYSQL_USER}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+    volumes:
+      - 'mysql-data:/var/lib/mysql'
+volumes:
+  mysql-data: null
+```
+
+<Note>
+The MySQL container exposes port **3307** on the host to avoid conflicts with existing MySQL installations using the default port 3306.
+</Note>
+
+### Environment File Setup
+
+Create a `.env` file in the project root with all required environment variables:
+
+```bash .env
+# MySQL Database
+MYSQL_HOST=mysql-db
+MYSQL_PORT=3306
+MYSQL_DATABASE=studiostkoh.portafolio
+MYSQL_USER=portfolio_user
+MYSQL_PASSWORD=secure_password_here
+MYSQL_ROOT_PASSWORD=root_password_here
+
+# JWT Configuration
+JWT_TOKEN=your_very_long_secret_key_for_jwt_tokens_min_256_bits
+JWT_EXPIRATION_TIME=60
+
+# Google Drive OAuth
+DRIVE_OAUTH_CLIENT_ID=your_client_id
+DRIVE_OAUTH_CLIENT_SECRET=your_client_secret
+DRIVE_OAUTH_REFRESH_TOKEN=your_refresh_token
+
+# Google Drive Folders
+DRIVE_FOLDER_USER_AVATARS=folder_id_for_avatars
+DRIVE_FOLDER_USER_RESUMES=folder_id_for_resumes
+DRIVE_FOLDER_PROJECTS_COVER=folder_id_for_covers
+DRIVE_FOLDER_SKILLS_ICON=folder_id_for_icons
+DRIVE_FOLDER_CERTIFICATES=folder_id_for_certificates
+
+# SMTP Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+GMAIL_APP_EMAIL=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_app_password
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+```
+
+<Warning>
+Never commit the `.env` file to version control. Add it to `.gitignore` to protect sensitive credentials.
+</Warning>
+
+### Start the Services
+
+<Steps>
+  <Step title="Start in Detached Mode">
+    Launch both the API and database containers:
+    ```bash
+    docker compose up -d
+    ```
+  </Step>
+  
+  <Step title="View Logs">
+    Monitor the application startup:
+    ```bash
+    docker compose logs -f portfolio-api
+    ```
+  </Step>
+  
+  <Step title="Verify Services">
+    Check that both containers are running:
+    ```bash
+    docker compose ps
+    ```
+  </Step>
+</Steps>
+
+### Access the Application
+
+Once started, access:
+
+- **API**: `http://localhost:8080`
+- **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
+- **MySQL**: `localhost:3307` (from host machine)
+
+---
+
+## Docker Compose Commands
+
+<CodeGroup>
+```bash Start Services
+docker compose up -d
+```
+
+```bash Stop Services
+docker compose down
+```
+
+```bash Restart Services
+docker compose restart
+```
+
+```bash Rebuild and Start
+docker compose up -d --build
+```
+
+```bash View Logs
+docker compose logs -f
+```
+
+```bash Stop and Remove Volumes
+docker compose down -v
+```
+</CodeGroup>
+
+<Warning>
+Using `docker compose down -v` will **delete all database data**. Only use this for development or when you want a clean slate.
+</Warning>
+
+---
+
+## Running Container Manually
+
+If you prefer to run the container without Docker Compose:
+
+### 1. Create Docker Network
+
+```bash
+docker network create portfolio-network
+```
+
+### 2. Run MySQL Container
+
+```bash
+docker run -d \
+  --name mysql-db-container \
+  --network portfolio-network \
+  -e MYSQL_ROOT_PASSWORD=root_password \
+  -e MYSQL_DATABASE=studiostkoh.portafolio \
+  -e MYSQL_USER=portfolio_user \
+  -e MYSQL_PASSWORD=secure_password \
+  -p 3307:3306 \
+  -v mysql-data:/var/lib/mysql \
+  mysql:8.0
+```
+
+### 3. Run API Container
+
+```bash
+docker run -d \
+  --name portfolio-api-container \
+  --network portfolio-network \
+  -p 8080:8080 \
+  -e MYSQL_HOST=mysql-db-container \
+  -e MYSQL_PORT=3306 \
+  -e MYSQL_DATABASE=studiostkoh.portafolio \
+  -e MYSQL_USER=portfolio_user \
+  -e MYSQL_PASSWORD=secure_password \
+  -e JWT_TOKEN=your_secret_key \
+  -e JWT_EXPIRATION_TIME=60 \
+  --env-file .env \
+  portfolio-hub-api:latest
+```
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Container fails to start">
+    Check the container logs:
+    ```bash
+    docker compose logs portfolio-api
+    ```
+    
+    Common issues:
+    - Missing environment variables
+    - Database connection errors
+    - Port conflicts
+  </Accordion>
+  
+  <Accordion title="Database connection refused">
+    Ensure the MySQL container is running:
+    ```bash
+    docker compose ps mysql-db
+    ```
+    
+    Verify the `MYSQL_HOST` is set to `mysql-db` (the service name) in your `.env` file.
+  </Accordion>
+  
+  <Accordion title="Port already in use">
+    If port 8080 or 3307 is already in use, modify the ports in `docker-compose.yml`:
+    ```yaml
+    ports:
+      - '9090:8080'  # Map to port 9090 instead
+    ```
+  </Accordion>
+  
+  <Accordion title="Flyway migration errors">
+    The application uses Flyway for database migrations. If you see migration errors:
+    
+    1. Check that the database schema exists
+    2. Verify Flyway baseline settings
+    3. Clear the database and restart:
+    ```bash
+    docker compose down -v
+    docker compose up -d
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Production Considerations
+
+<CardGroup cols={2}>
+  <Card title="Use External Database" icon="database">
+    For production, use a managed database service (AWS RDS, Google Cloud SQL) instead of a containerized MySQL instance.
+  </Card>
+  
+  <Card title="Enable Health Checks" icon="heart-pulse">
+    Add health check endpoints and configure Docker health checks in your compose file.
+  </Card>
+  
+  <Card title="Use Secrets Management" icon="key">
+    Use Docker Secrets or external secret managers (AWS Secrets Manager, HashiCorp Vault) instead of `.env` files.
+  </Card>
+  
+  <Card title="Enable Monitoring" icon="chart-line">
+    Integrate monitoring tools like Prometheus and Grafana to track container metrics.
+  </Card>
+</CardGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="gear" href="/deployment/environment-variables">
+    Learn about all configuration options
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore available endpoints
+  </Card>
+</CardGroup>

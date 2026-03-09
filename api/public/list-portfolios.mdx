@@ -1,0 +1,121 @@
+---
+title: "List Portfolios"
+api: "GET /api/portfolios"
+description: "Get a list of all public portfolios available on the platform"
+---
+
+This endpoint returns a list of all public portfolios. No authentication is required. Perfect for displaying a directory or listing page of all available portfolios.
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A descriptive message about the response
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 timestamp of when the response was generated
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Array of portfolio objects
+  
+  <ResponseField name="slug" type="string" required>
+    Unique URL-friendly identifier for the portfolio
+  </ResponseField>
+  
+  <ResponseField name="fullName" type="string" required>
+    Full name of the portfolio owner
+  </ResponseField>
+  
+  <ResponseField name="headline" type="string" required>
+    Short professional headline or tagline
+  </ResponseField>
+  
+  <ResponseField name="avatarUrl" type="string">
+    URL to the user's avatar image
+  </ResponseField>
+  
+  <ResponseField name="tkohCollab" type="boolean" required>
+    Indicates if this is a TKOH Studios collaboration portfolio
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.portfoliohub.com/api/portfolios
+```
+
+```javascript JavaScript
+fetch('https://api.portfoliohub.com/api/portfolios')
+  .then(response => response.json())
+  .then(data => console.log(data));
+```
+
+```python Python
+import requests
+
+response = requests.get('https://api.portfoliohub.com/api/portfolios')
+portfolios = response.json()
+print(portfolios)
+```
+
+```java Java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.portfoliohub.com/api/portfolios"))
+    .GET()
+    .build();
+
+HttpResponse<String> response = client.send(request, 
+    HttpResponse.BodyHandlers.ofString());
+System.out.println(response.body());
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "message": "Portafolios públicos obtenidos",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": [
+    {
+      "slug": "john-doe",
+      "fullName": "John Doe",
+      "headline": "Full Stack Developer | React & Spring Boot Expert",
+      "avatarUrl": "https://storage.example.com/avatars/john-doe.jpg",
+      "tkohCollab": false
+    },
+    {
+      "slug": "jane-smith",
+      "fullName": "Jane Smith",
+      "headline": "UI/UX Designer | Creative Problem Solver",
+      "avatarUrl": "https://storage.example.com/avatars/jane-smith.jpg",
+      "tkohCollab": true
+    }
+  ]
+}
+```
+
+## Use Cases
+
+- Display a directory of all portfolios on a landing page
+- Build a search/filter interface for discovering portfolios
+- Create a portfolio gallery or showcase page
+- Integrate portfolio listings into external websites
+
+## Notes
+
+- This endpoint does not require authentication
+- Results include only portfolios that are marked as public
+- The `tkohCollab` flag can be used to highlight TKOH Studios collaborations
+- Use the `slug` field to construct links to individual portfolio detail pages

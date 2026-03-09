@@ -1,0 +1,741 @@
+---
+title: 'Public API'
+description: 'Access portfolios without authentication - perfect for displaying on websites'
+icon: 'globe'
+---
+
+The Public API allows anyone to view portfolio information without authentication. This is ideal for embedding portfolios on personal websites or sharing your work publicly.
+
+<Note>
+All endpoints in this guide are **publicly accessible** and do not require authentication.
+</Note>
+
+## Overview
+
+The Public API provides:
+- **Read-only access** to portfolio data
+- **No authentication required** for viewing
+- **SEO-friendly URLs** with slug-based routing
+- **Contact form functionality** for visitors to reach out
+
+### Public vs Private Endpoints
+
+| Feature | Public API | Authenticated API |
+|---------|-----------|------------------|
+| **Base Path** | `/api/portfolios` | `/api/me` |
+| **Authentication** | None required | JWT token required |
+| **Access Level** | Read-only | Full CRUD |
+| **Use Case** | Portfolio websites | Portfolio management |
+
+## Security Configuration
+
+From `SecurityConfig.java:44-50`, these endpoints are publicly accessible:
+
+```java
+.authorizeHttpRequests(auth -> auth
+    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    .requestMatchers("/").permitAll()
+    .requestMatchers("/api/auth/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/portfolios/**").permitAll()
+    .requestMatchers(HttpMethod.POST, "/api/portfolios/*/contact").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/skills").permitAll()
+    // ... other matchers
+)
+```
+
+## List All Portfolios
+
+Get a summary of all public portfolios:
+
+```bash
+GET /api/portfolios
+```
+
+**No authentication required**
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Portafolios públicos obtenidos",
+  "data": [
+    {
+      "slug": "john-doe",
+      "fullName": "John Doe",
+      "headline": "Senior Full Stack Developer",
+      "avatarUrl": "https://drive.google.com/uc?export=view&id=...",
+      "location": "San Francisco, CA"
+    },
+    {
+      "slug": "jane-smith",
+      "fullName": "Jane Smith",
+      "headline": "Product Designer & UX Researcher",
+      "avatarUrl": "https://drive.google.com/uc?export=view&id=...",
+      "location": "New York, NY"
+    }
+  ]
+}
+```
+
+Implementation from `PublicPortfolioController.java:40-44`:
+
+```java
+@GetMapping
+public ResponseEntity<ApiResponse<List<PortfolioPublicDto>>> getAllPortfolios() {
+    List<PortfolioPublicDto> portfolios = publicPortfolioService.getAllPublicProfiles();
+    return ResponseEntity.ok(ApiResponse.ok("Portafolios públicos obtenidos", portfolios));
+}
+```
+
+## Get Portfolio by Slug
+
+Retrieve complete portfolio information using a unique slug:
+
+```bash
+GET /api/portfolios/{slug}
+```
+
+**Path Parameters:**
+- `slug`: Unique identifier (e.g., "john-doe")
+
+**Example:**
+```bash
+curl https://api.example.com/api/portfolios/john-doe
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Portafolio obtenido exitosamente",
+  "data": {
+    "profile": {
+      "slug": "john-doe",
+      "fullName": "John Doe",
+      "headline": "Senior Full Stack Developer",
+      "bio": "Passionate developer with 8+ years of experience building scalable web applications. Specialized in Spring Boot, React, and cloud architecture.",
+      "location": "San Francisco, CA",
+      "avatarUrl": "https://drive.google.com/uc?export=view&id=...",
+      "resumeUrl": "https://drive.google.com/uc?export=view&id=..."
+    },
+    "experiences": [
+      {
+        "id": 1,
+        "company": "Tech Corp",
+        "role": "Senior Full Stack Developer",
+        "location": "Remote",
+        "startDate": "2020-01-15",
+        "endDate": null,
+        "current": true,
+        "description": "Leading development of microservices architecture..."
+      },
+      {
+        "id": 2,
+        "company": "StartupXYZ",
+        "role": "Full Stack Developer",
+        "location": "San Francisco, CA",
+        "startDate": "2018-03-01",
+        "endDate": "2019-12-31",
+        "current": false,
+        "description": "Built RESTful APIs and React applications..."
+      }
+    ],
+    "education": [
+      {
+        "id": 1,
+        "institution": "Stanford University",
+        "degree": "Bachelor of Science",
+        "field": "Computer Science",
+        "startDate": "2014-09-01",
+        "endDate": "2018-06-15",
+        "description": "Focus on distributed systems and algorithms"
+      }
+    ],
+    "projects": [
+      {
+        "slug": "e-commerce-platform",
+        "title": "E-Commerce Platform",
+        "summary": "Full-stack e-commerce solution with Spring Boot and React",
+        "coverImage": "https://drive.google.com/uc?export=view&id=...",
+        "featured": true,
+        "technologies": ["Spring Boot", "React", "PostgreSQL", "Docker"]
+      },
+      {
+        "slug": "task-manager-app",
+        "title": "Task Manager App",
+        "summary": "Real-time task management with WebSocket support",
+        "coverImage": "https://drive.google.com/uc?export=view&id=...",
+        "featured": false,
+        "technologies": ["Node.js", "Vue.js", "MongoDB"]
+      }
+    ],
+    "skills": [
+      {
+        "categoryName": "Backend Development",
+        "skills": [
+          {
+            "name": "Spring Boot",
+            "level": 90,
+            "icon": "https://drive.google.com/uc?export=view&id=..."
+          },
+          {
+            "name": "Node.js",
+            "level": 75,
+            "icon": "https://drive.google.com/uc?export=view&id=..."
+          }
+        ]
+      },
+      {
+        "categoryName": "Frontend Development",
+        "skills": [
+          {
+            "name": "React",
+            "level": 85,
+            "icon": "https://drive.google.com/uc?export=view&id=..."
+          },
+          {
+            "name": "Vue.js",
+            "level": 70,
+            "icon": "https://drive.google.com/uc?export=view&id=..."
+          }
+        ]
+      }
+    ],
+    "socialLinks": [
+      {
+        "platform": "GitHub",
+        "url": "https://github.com/johndoe",
+        "icon": "github"
+      },
+      {
+        "platform": "LinkedIn",
+        "url": "https://linkedin.com/in/johndoe",
+        "icon": "linkedin"
+      }
+    ],
+    "certificates": [
+      {
+        "id": 1,
+        "title": "AWS Certified Solutions Architect",
+        "issuer": "Amazon Web Services",
+        "issueDate": "2023-05-15",
+        "expiryDate": "2026-05-15",
+        "credentialUrl": "https://aws.amazon.com/verification/...",
+        "fileUrl": "https://drive.google.com/uc?export=view&id=..."
+      }
+    ]
+  }
+}
+```
+
+Implementation from `PublicPortfolioController.java:46-50`:
+
+```java
+@GetMapping("/{slug}")
+public ResponseEntity<ApiResponse<PortfolioDetailDto>> getPortfolioBySlug(@PathVariable String slug) {
+    PortfolioDetailDto portfolio = publicPortfolioService.getFullPortfolioBySlug(slug);
+    return ResponseEntity.ok(ApiResponse.ok("Portafolio obtenido exitosamente", portfolio));
+}
+```
+
+## Get Project Details
+
+Retrieve detailed information about a specific project:
+
+```bash
+GET /api/portfolios/{profileSlug}/projects/{projectSlug}
+```
+
+**Path Parameters:**
+- `profileSlug`: Portfolio owner's slug (e.g., "john-doe")
+- `projectSlug`: Project's slug (e.g., "e-commerce-platform")
+
+**Example:**
+```bash
+curl https://api.example.com/api/portfolios/john-doe/projects/e-commerce-platform
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Detalle del proyecto obtenido",
+  "data": {
+    "id": 1,
+    "slug": "e-commerce-platform",
+    "title": "E-Commerce Platform",
+    "summary": "Full-stack e-commerce solution with Spring Boot and React",
+    "description": "# E-Commerce Platform\n\nA comprehensive e-commerce solution featuring:\n\n- **Backend:** Spring Boot with microservices architecture\n- **Frontend:** React with Redux for state management\n- **Database:** PostgreSQL with JPA/Hibernate\n- **Payment:** Stripe integration\n- **Deployment:** Docker containers on AWS ECS\n\n## Key Features\n\n- User authentication with JWT\n- Product catalog with search and filters\n- Shopping cart and checkout flow\n- Order tracking and history\n- Admin dashboard for inventory management\n\n## Technical Highlights\n\n- RESTful API design\n- Real-time inventory updates with WebSocket\n- Elasticsearch for product search\n- Redis for session management\n- Automated testing with JUnit and Jest",
+    "repoUrl": "https://github.com/johndoe/ecommerce-platform",
+    "liveUrl": "https://ecommerce-demo.example.com",
+    "coverImage": "https://drive.google.com/uc?export=view&id=...",
+    "startDate": "2023-01-01",
+    "endDate": "2023-06-30",
+    "featured": true,
+    "skills": [
+      {
+        "id": 1,
+        "name": "Spring Boot",
+        "level": 90,
+        "icon": "https://drive.google.com/uc?export=view&id=..."
+      },
+      {
+        "id": 3,
+        "name": "React",
+        "level": 85,
+        "icon": "https://drive.google.com/uc?export=view&id=..."
+      },
+      {
+        "id": 7,
+        "name": "PostgreSQL",
+        "level": 80,
+        "icon": "https://drive.google.com/uc?export=view&id=..."
+      },
+      {
+        "id": 12,
+        "name": "Docker",
+        "level": 75,
+        "icon": "https://drive.google.com/uc?export=view&id=..."
+      }
+    ]
+  }
+}
+```
+
+Implementation from `PublicPortfolioController.java:52-58`:
+
+```java
+@GetMapping("/{profileSlug}/projects/{projectSlug}")
+public ResponseEntity<ApiResponse<ProjectDto>> getProjectDetails(
+        @PathVariable String profileSlug,
+        @PathVariable String projectSlug) {
+    ProjectDto project = publicPortfolioService.getPublicProjectBySlugs(profileSlug, projectSlug);
+    return ResponseEntity.ok(ApiResponse.ok("Detalle del proyecto obtenido", project));
+}
+```
+
+## Contact Form Submission
+
+Allow visitors to send messages through the contact form:
+
+```bash
+POST /api/portfolios/{slug}/contact
+Content-Type: application/json
+```
+
+**Path Parameters:**
+- `slug`: Portfolio owner's slug
+
+**Request Body** (`ContactRequest.java`):
+```json
+{
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "message": "Hi John, I'd love to discuss a potential collaboration on a new project. Are you available for a call next week?"
+}
+```
+
+**Validation Rules:**
+- `name`: Required, max 120 characters
+- `email`: Required, valid email format, max 160 characters
+- `message`: Required, max 5000 characters
+
+**Example:**
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/api/portfolios/john-doe/contact \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "message": "Hi John, I would like to discuss a project opportunity."
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/portfolios/john-doe/contact', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Alice Johnson',
+    email: 'alice@example.com',
+    message: 'Hi John, I would like to discuss a project opportunity.'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+data = {
+    'name': 'Alice Johnson',
+    'email': 'alice@example.com',
+    'message': 'Hi John, I would like to discuss a project opportunity.'
+}
+
+response = requests.post(
+    'https://api.example.com/api/portfolios/john-doe/contact',
+    json=data
+)
+
+print(response.json())
+```
+</CodeGroup>
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Mensaje enviado exitosamente"
+}
+```
+
+### Contact Form Implementation
+
+From `PublicPortfolioController.java:60-79`:
+
+```java
+@PostMapping("/{slug}/contact")
+public ResponseEntity<ApiResponse<Void>> handleContactForm(
+        @PathVariable String slug,
+        @Valid @RequestBody ContactRequest contactRequest) {
+
+    Profile profile = profileRepository.findBySlug(slug)
+            .orElseThrow(() -> new ResourceNotFoundException("Profile", "slug", slug));
+
+    ContactMessage message = new ContactMessage();
+    message.setName(contactRequest.name());
+    message.setEmail(contactRequest.email());
+    message.setMessage(contactRequest.message());
+    message.setProfile(profile);
+    message.setStatus("NEW");
+    ContactMessage savedMessage = contactMessageRepository.save(message);
+
+    emailService.sendContactNotification(profile, savedMessage);
+
+    return ResponseEntity.ok(ApiResponse.ok("Mensaje enviado exitosamente"));
+}
+```
+
+**What happens when a contact form is submitted:**
+
+<Steps>
+  <Step title="Validate Input">
+    The request body is validated using Jakarta Bean Validation annotations.
+  </Step>
+
+  <Step title="Find Portfolio Owner">
+    The system looks up the profile by slug. Returns 404 if not found.
+  </Step>
+
+  <Step title="Save Message">
+    The contact message is saved to the database with status "NEW".
+  </Step>
+
+  <Step title="Send Email Notification">
+    An email is sent to the portfolio owner's contact email. See [Email Notifications](/guides/email-notifications) for details.
+  </Step>
+
+  <Step title="Return Success">
+    A success response is returned to the visitor.
+  </Step>
+</Steps>
+
+## Building a Portfolio Website
+
+Here's how to use the Public API to build a portfolio website:
+
+### Example: React Portfolio
+
+```jsx
+import React, { useEffect, useState } from 'react';
+
+function Portfolio({ slug }) {
+  const [portfolio, setPortfolio] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`https://api.example.com/api/portfolios/${slug}`)
+      .then(res => res.json())
+      .then(data => {
+        setPortfolio(data.data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error loading portfolio:', error);
+        setLoading(false);
+      });
+  }, [slug]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!portfolio) return <div>Portfolio not found</div>;
+
+  return (
+    <div className="portfolio">
+      <header>
+        <img src={portfolio.profile.avatarUrl} alt={portfolio.profile.fullName} />
+        <h1>{portfolio.profile.fullName}</h1>
+        <h2>{portfolio.profile.headline}</h2>
+        <p>{portfolio.profile.bio}</p>
+      </header>
+
+      <section>
+        <h2>Experience</h2>
+        {portfolio.experiences.map(exp => (
+          <div key={exp.id}>
+            <h3>{exp.role} at {exp.company}</h3>
+            <p>{exp.startDate} - {exp.current ? 'Present' : exp.endDate}</p>
+            <p>{exp.description}</p>
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <h2>Projects</h2>
+        {portfolio.projects.map(project => (
+          <div key={project.slug}>
+            <img src={project.coverImage} alt={project.title} />
+            <h3>{project.title}</h3>
+            <p>{project.summary}</p>
+            <div className="technologies">
+              {project.technologies.map(tech => (
+                <span key={tech}>{tech}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <h2>Skills</h2>
+        {portfolio.skills.map(category => (
+          <div key={category.categoryName}>
+            <h3>{category.categoryName}</h3>
+            {category.skills.map(skill => (
+              <div key={skill.name}>
+                <img src={skill.icon} alt={skill.name} />
+                <span>{skill.name}</span>
+                <div className="skill-level" style={{ width: `${skill.level}%` }} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+export default Portfolio;
+```
+
+### Example: Contact Form Component
+
+```jsx
+import React, { useState } from 'react';
+
+function ContactForm({ slug }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [status, setStatus] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('sending');
+
+    try {
+      const response = await fetch(
+        `https://api.example.com/api/portfolios/${slug}/contact`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setStatus('success');
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        setStatus('error');
+      }
+    } catch (error) {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Your Name"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        required
+      />
+      <input
+        type="email"
+        placeholder="Your Email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        required
+      />
+      <textarea
+        placeholder="Your Message"
+        value={formData.message}
+        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+        required
+      />
+      <button type="submit" disabled={status === 'sending'}>
+        {status === 'sending' ? 'Sending...' : 'Send Message'}
+      </button>
+      {status === 'success' && <p>Message sent successfully!</p>}
+      {status === 'error' && <p>Failed to send message. Please try again.</p>}
+    </form>
+  );
+}
+
+export default ContactForm;
+```
+
+## CORS Configuration
+
+The API allows cross-origin requests from configured domains. From `SecurityConfig.java:64-85`:
+
+```java
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+
+    List<String> origins = (allowedOrigins != null && !allowedOrigins.isBlank())
+            ? Arrays.asList(allowedOrigins.split(","))
+            : List.of("*");
+
+    configuration.setAllowedOrigins(origins);
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+    configuration.setAllowedHeaders(List.of(
+            "Authorization",
+            "Content-Type",
+            "Cache-Control",
+            "ngrok-skip-browser-warning"
+    ));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+}
+```
+
+Configure allowed origins in `application.properties`:
+
+```properties
+application.security.cors.allowed-origins=https://myportfolio.com,https://www.myportfolio.com
+```
+
+## Error Responses
+
+<Tabs>
+  <Tab title="Portfolio Not Found">
+    **Status:** `404 Not Found`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Profile with slug 'invalid-slug' not found"
+    }
+    ```
+  </Tab>
+
+  <Tab title="Project Not Found">
+    **Status:** `404 Not Found`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Project with slug 'invalid-project' not found"
+    }
+    ```
+  </Tab>
+
+  <Tab title="Validation Error">
+    **Status:** `400 Bad Request`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Validation failed",
+      "errors": {
+        "email": "must be a well-formed email address",
+        "message": "must not be blank"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## SEO Best Practices
+
+<Note>
+**Tips for SEO-friendly portfolio websites:**
+
+1. **Use server-side rendering (SSR)** - Fetch data on the server for better SEO
+2. **Generate meta tags dynamically** - Use portfolio data for title, description, and Open Graph tags
+3. **Create sitemaps** - List all portfolio and project URLs
+4. **Use semantic HTML** - Proper heading hierarchy and semantic elements
+5. **Optimize images** - Use responsive images with proper alt text
+6. **Implement structured data** - Add JSON-LD for Person, CreativeWork, etc.
+</Note>
+
+### Example: Next.js SSR
+
+```javascript
+export async function getServerSideProps({ params }) {
+  const res = await fetch(`https://api.example.com/api/portfolios/${params.slug}`);
+  const data = await res.json();
+
+  return {
+    props: {
+      portfolio: data.data,
+      meta: {
+        title: `${data.data.profile.fullName} - ${data.data.profile.headline}`,
+        description: data.data.profile.bio,
+        image: data.data.profile.avatarUrl
+      }
+    }
+  };
+}
+```
+
+## Rate Limiting
+
+<Warning>
+The Public API may implement rate limiting in the future to prevent abuse. Best practices:
+
+- **Cache responses** when possible
+- **Implement retry logic** with exponential backoff
+- **Don't poll excessively** - data doesn't change frequently
+- **Use CDN caching** for static assets
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Email Notifications" icon="envelope" href="/guides/email-notifications">
+    Learn how contact form submissions trigger email notifications
+  </Card>
+  <Card title="API Reference" icon="book" href="/api/overview">
+    View complete API documentation with all endpoints
+  </Card>
+</CardGroup>

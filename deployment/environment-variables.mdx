@@ -1,0 +1,678 @@
+---
+title: 'Environment Variables'
+description: 'Complete reference for all environment variables in Portfolio Hub API'
+icon: 'gear'
+---
+
+## Overview
+
+Portfolio Hub API is configured entirely through environment variables, following the [12-Factor App](https://12factor.net/config) methodology. This approach allows the same application build to be deployed across different environments without code changes.
+
+<Note>
+All environment variables can be set in a `.env` file for local development or configured directly in your deployment platform.
+</Note>
+
+---
+
+## Database Configuration
+
+These variables configure the MySQL database connection.
+
+### MYSQL_HOST
+
+<ParamField path="MYSQL_HOST" type="string" required>
+  The hostname or IP address of your MySQL server.
+  
+  **Default**: None (required)
+  
+  **Examples**:
+  - `localhost` - Local development
+  - `mysql-db` - Docker Compose service name
+  - `db.example.com` - Remote database server
+  - `10.0.1.5` - IP address
+</ParamField>
+
+```bash
+MYSQL_HOST=mysql-db
+```
+
+### MYSQL_PORT
+
+<ParamField path="MYSQL_PORT" type="integer" default="3306">
+  The port number on which MySQL is listening.
+  
+  **Default**: `3306`
+  
+  **Note**: This is optional. If not provided, defaults to 3306.
+</ParamField>
+
+```bash
+MYSQL_PORT=3306
+```
+
+### MYSQL_DATABASE
+
+<ParamField path="MYSQL_DATABASE" type="string" required>
+  The name of the database schema to use.
+  
+  **Default**: None (required)
+  
+  **Expected Value**: `studiostkoh.portafolio`
+</ParamField>
+
+```bash
+MYSQL_DATABASE=studiostkoh.portafolio
+```
+
+<Warning>
+The database schema must exist before starting the application. Flyway will handle table creation, but not schema creation.
+</Warning>
+
+### MYSQL_USER
+
+<ParamField path="MYSQL_USER" type="string" required>
+  The MySQL username for authentication.
+  
+  **Default**: None (required)
+  
+  **Permissions Required**: The user must have:
+  - `SELECT`, `INSERT`, `UPDATE`, `DELETE` on all tables
+  - `CREATE`, `ALTER`, `DROP` for Flyway migrations
+</ParamField>
+
+```bash
+MYSQL_USER=portfolio_user
+```
+
+### MYSQL_PASSWORD
+
+<ParamField path="MYSQL_PASSWORD" type="string" required>
+  The password for the MySQL user.
+  
+  **Default**: None (required)
+  
+  **Security**: Use strong passwords (minimum 16 characters, mix of letters, numbers, symbols)
+</ParamField>
+
+```bash
+MYSQL_PASSWORD=your_secure_password_here
+```
+
+### MYSQL_ROOT_PASSWORD
+
+<ParamField path="MYSQL_ROOT_PASSWORD" type="string">
+  Required **only for Docker Compose** to initialize the MySQL container.
+  
+  **Default**: None
+  
+  **Usage**: Only needed when running MySQL in Docker. Not used by the application.
+</ParamField>
+
+```bash
+MYSQL_ROOT_PASSWORD=root_password_here
+```
+
+---
+
+## JWT Security Configuration
+
+These variables configure JSON Web Token (JWT) authentication.
+
+### JWT_TOKEN
+
+<ParamField path="JWT_TOKEN" type="string" required>
+  The secret key used to sign and verify JWT tokens.
+  
+  **Default**: None (required)
+  
+  **Security Requirements**:
+  - Minimum 256 bits (32 characters) for HS256 algorithm
+  - Use cryptographically secure random strings
+  - Never commit to version control
+  - Rotate regularly in production
+</ParamField>
+
+```bash
+JWT_TOKEN=your_very_long_secret_key_for_jwt_tokens_minimum_256_bits
+```
+
+<Accordion title="How to generate a secure JWT secret">
+  Use one of these methods to generate a secure random key:
+  
+  ```bash OpenSSL
+  openssl rand -base64 32
+  ```
+  
+  ```bash Node.js
+  node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+  ```
+  
+  ```bash Python
+  python -c "import secrets; print(secrets.token_urlsafe(32))"
+  ```
+</Accordion>
+
+### JWT_EXPIRATION_TIME
+
+<ParamField path="JWT_EXPIRATION_TIME" type="integer" required>
+  Token expiration time in **minutes**.
+  
+  **Default**: None (required)
+  
+  **Recommended Values**:
+  - `15-30` minutes for high-security applications
+  - `60` minutes for standard applications
+  - `480` (8 hours) for development environments
+</ParamField>
+
+```bash
+JWT_EXPIRATION_TIME=60
+```
+
+<Note>
+Shorter expiration times increase security but require more frequent re-authentication. Consider implementing refresh tokens for better user experience.
+</Note>
+
+---
+
+## Google Drive Integration
+
+These variables configure the Google Drive API for file uploads (avatars, resumes, project covers, certificates).
+
+### OAuth 2.0 Credentials
+
+<Steps>
+  <Step title="Create Google Cloud Project">
+    Go to [Google Cloud Console](https://console.cloud.google.com) and create a new project.
+  </Step>
+  
+  <Step title="Enable Google Drive API">
+    Enable the Google Drive API for your project.
+  </Step>
+  
+  <Step title="Create OAuth 2.0 Credentials">
+    Create OAuth 2.0 credentials and obtain the Client ID, Client Secret, and Refresh Token.
+  </Step>
+</Steps>
+
+### DRIVE_OAUTH_CLIENT_ID
+
+<ParamField path="DRIVE_OAUTH_CLIENT_ID" type="string" required>
+  The OAuth 2.0 Client ID from Google Cloud Console.
+  
+  **Default**: None (required)
+  
+  **Format**: `xxxxxxxxxxxxx.apps.googleusercontent.com`
+</ParamField>
+
+```bash
+DRIVE_OAUTH_CLIENT_ID=123456789012-abcdefghijklmnop.apps.googleusercontent.com
+```
+
+### DRIVE_OAUTH_CLIENT_SECRET
+
+<ParamField path="DRIVE_OAUTH_CLIENT_SECRET" type="string" required>
+  The OAuth 2.0 Client Secret from Google Cloud Console.
+  
+  **Default**: None (required)
+  
+  **Security**: Keep this secret secure and never expose it publicly.
+</ParamField>
+
+```bash
+DRIVE_OAUTH_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### DRIVE_OAUTH_REFRESH_TOKEN
+
+<ParamField path="DRIVE_OAUTH_REFRESH_TOKEN" type="string" required>
+  The OAuth 2.0 Refresh Token for long-term access.
+  
+  **Default**: None (required)
+  
+  **Note**: This token allows the application to access Google Drive without user interaction.
+</ParamField>
+
+```bash
+DRIVE_OAUTH_REFRESH_TOKEN=1//0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Google Drive Folder IDs
+
+These variables specify the Google Drive folder IDs where different file types are stored.
+
+<AccordionGroup>
+  <Accordion title="How to find Google Drive Folder IDs">
+    1. Open Google Drive in your browser
+    2. Navigate to the desired folder
+    3. The URL will look like: `https://drive.google.com/drive/folders/FOLDER_ID_HERE`
+    4. Copy the `FOLDER_ID_HERE` part
+    
+    **Example**: 
+    `https://drive.google.com/drive/folders/1A2B3C4D5E6F7G8H9I0J`
+    
+    Folder ID: `1A2B3C4D5E6F7G8H9I0J`
+  </Accordion>
+</AccordionGroup>
+
+### DRIVE_FOLDER_USER_AVATARS
+
+<ParamField path="DRIVE_FOLDER_USER_AVATARS" type="string" required>
+  Folder ID for storing user avatar images.
+</ParamField>
+
+```bash
+DRIVE_FOLDER_USER_AVATARS=1AbCdEfGhIjKlMnOpQrStUvWxYz
+```
+
+### DRIVE_FOLDER_USER_RESUMES
+
+<ParamField path="DRIVE_FOLDER_USER_RESUMES" type="string" required>
+  Folder ID for storing user resume/CV files (PDF).
+</ParamField>
+
+```bash
+DRIVE_FOLDER_USER_RESUMES=2BcDeFgHiJkLmNoPqRsTuVwXyZa
+```
+
+### DRIVE_FOLDER_PROJECTS_COVER
+
+<ParamField path="DRIVE_FOLDER_PROJECTS_COVER" type="string" required>
+  Folder ID for storing project cover images.
+</ParamField>
+
+```bash
+DRIVE_FOLDER_PROJECTS_COVER=3CdEfGhIjKlMnOpQrStUvWxYzAb
+```
+
+### DRIVE_FOLDER_SKILLS_ICON
+
+<ParamField path="DRIVE_FOLDER_SKILLS_ICON" type="string" required>
+  Folder ID for storing skill icons.
+</ParamField>
+
+```bash
+DRIVE_FOLDER_SKILLS_ICON=4DeFgHiJkLmNoPqRsTuVwXyZaBc
+```
+
+### DRIVE_FOLDER_CERTIFICATES
+
+<ParamField path="DRIVE_FOLDER_CERTIFICATES" type="string" required>
+  Folder ID for storing certificate files.
+</ParamField>
+
+```bash
+DRIVE_FOLDER_CERTIFICATES=5EfGhIjKlMnOpQrStUvWxYzAbCd
+```
+
+---
+
+## Email Configuration
+
+These variables configure SMTP for sending emails (e.g., contact form submissions).
+
+### SMTP_HOST
+
+<ParamField path="SMTP_HOST" type="string" required>
+  The SMTP server hostname.
+  
+  **Default**: None (required)
+  
+  **Common Values**:
+  - `smtp.gmail.com` - Gmail
+  - `smtp-mail.outlook.com` - Outlook
+  - `smtp.sendgrid.net` - SendGrid
+  - `smtp.mailgun.org` - Mailgun
+</ParamField>
+
+```bash
+SMTP_HOST=smtp.gmail.com
+```
+
+### SMTP_PORT
+
+<ParamField path="SMTP_PORT" type="integer" required>
+  The SMTP server port.
+  
+  **Default**: None (required)
+  
+  **Common Ports**:
+  - `587` - TLS/STARTTLS (recommended)
+  - `465` - SSL
+  - `25` - Unencrypted (not recommended)
+</ParamField>
+
+```bash
+SMTP_PORT=587
+```
+
+### GMAIL_APP_EMAIL
+
+<ParamField path="GMAIL_APP_EMAIL" type="string" required>
+  The email address used to send emails.
+  
+  **Default**: None (required)
+  
+  **Format**: Valid email address
+</ParamField>
+
+```bash
+GMAIL_APP_EMAIL=your_email@gmail.com
+```
+
+### GMAIL_APP_PASSWORD
+
+<ParamField path="GMAIL_APP_PASSWORD" type="string" required>
+  The password or app-specific password for SMTP authentication.
+  
+  **Default**: None (required)
+  
+  **For Gmail**: You must use an [App Password](https://support.google.com/accounts/answer/185833), not your regular Gmail password.
+</ParamField>
+
+```bash
+GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+```
+
+<Accordion title="How to create a Gmail App Password">
+  1. Go to your [Google Account Security Settings](https://myaccount.google.com/security)
+  2. Enable 2-Step Verification if not already enabled
+  3. Go to "App passwords" section
+  4. Generate a new app password for "Mail"
+  5. Copy the 16-character password (spaces are optional)
+  
+  <Warning>
+  App passwords can only be created if 2-Step Verification is enabled.
+  </Warning>
+</Accordion>
+
+---
+
+## CORS Configuration
+
+### CORS_ALLOWED_ORIGINS
+
+<ParamField path="CORS_ALLOWED_ORIGINS" type="string" required>
+  Comma-separated list of allowed origins for Cross-Origin Resource Sharing (CORS).
+  
+  **Default**: None (required)
+  
+  **Format**: `origin1,origin2,origin3` (no spaces)
+  
+  **Examples**:
+  - Development: `http://localhost:3000,http://localhost:5173`
+  - Production: `https://yourdomain.com,https://www.yourdomain.com`
+</ParamField>
+
+```bash
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+```
+
+<Warning>
+Never use `*` (wildcard) for CORS in production. Always specify exact origins for security.
+</Warning>
+
+---
+
+## Application Properties
+
+The following properties are defined in `application.properties` and reference the environment variables above:
+
+```properties
+# Database Connection
+spring.datasource.url=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.username=${MYSQL_USER}
+spring.datasource.password=${MYSQL_PASSWORD}
+
+# JWT Security
+application.security.jwt.secret-key=${JWT_TOKEN}
+application.security.jwt.expiration=${JWT_EXPIRATION_TIME}
+
+# Google Drive
+google.drive.oauth.client-id=${DRIVE_OAUTH_CLIENT_ID}
+google.drive.oauth.client-secret=${DRIVE_OAUTH_CLIENT_SECRET}
+google.drive.oauth.refresh-token=${DRIVE_OAUTH_REFRESH_TOKEN}
+google.drive.folders.user-avatars=${DRIVE_FOLDER_USER_AVATARS}
+google.drive.folders.user-resumes=${DRIVE_FOLDER_USER_RESUMES}
+google.drive.folders.projects-cover=${DRIVE_FOLDER_PROJECTS_COVER}
+google.drive.folders.skills-icon=${DRIVE_FOLDER_SKILLS_ICON}
+google.drive.folders.certificates=${DRIVE_FOLDER_CERTIFICATES}
+
+# Email SMTP
+spring.mail.host=${SMTP_HOST}
+spring.mail.port=${SMTP_PORT}
+spring.mail.username=${GMAIL_APP_EMAIL}
+spring.mail.password=${GMAIL_APP_PASSWORD}
+
+# CORS
+application.security.cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
+```
+
+---
+
+## Complete .env Template
+
+Here's a complete `.env` file template with all required variables:
+
+```bash .env
+# ======================
+# DATABASE CONFIGURATION
+# ======================
+MYSQL_HOST=mysql-db
+MYSQL_PORT=3306
+MYSQL_DATABASE=studiostkoh.portafolio
+MYSQL_USER=portfolio_user
+MYSQL_PASSWORD=your_secure_password_here
+
+# Docker Compose only
+MYSQL_ROOT_PASSWORD=root_password_here
+
+# ======================
+# JWT SECURITY
+# ======================
+JWT_TOKEN=your_very_long_secret_key_for_jwt_tokens_minimum_256_bits
+JWT_EXPIRATION_TIME=60
+
+# ======================
+# GOOGLE DRIVE OAUTH
+# ======================
+DRIVE_OAUTH_CLIENT_ID=123456789012-abcdefghijklmnop.apps.googleusercontent.com
+DRIVE_OAUTH_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
+DRIVE_OAUTH_REFRESH_TOKEN=1//0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# ======================
+# GOOGLE DRIVE FOLDERS
+# ======================
+DRIVE_FOLDER_USER_AVATARS=1AbCdEfGhIjKlMnOpQrStUvWxYz
+DRIVE_FOLDER_USER_RESUMES=2BcDeFgHiJkLmNoPqRsTuVwXyZa
+DRIVE_FOLDER_PROJECTS_COVER=3CdEfGhIjKlMnOpQrStUvWxYzAb
+DRIVE_FOLDER_SKILLS_ICON=4DeFgHiJkLmNoPqRsTuVwXyZaBc
+DRIVE_FOLDER_CERTIFICATES=5EfGhIjKlMnOpQrStUvWxYzAbCd
+
+# ======================
+# EMAIL CONFIGURATION
+# ======================
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+GMAIL_APP_EMAIL=your_email@gmail.com
+GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+
+# ======================
+# CORS CONFIGURATION
+# ======================
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+```
+
+<Warning>
+Replace all placeholder values with your actual credentials. Never commit this file to version control.
+</Warning>
+
+---
+
+## Environment-Specific Configurations
+
+<Tabs>
+  <Tab title="Development">
+    ```bash .env.development
+    MYSQL_HOST=localhost
+    MYSQL_PORT=3306
+    JWT_EXPIRATION_TIME=480
+    CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+    ```
+    
+    **Characteristics**:
+    - Local database
+    - Longer JWT expiration for convenience
+    - Multiple localhost origins for different frontend ports
+  </Tab>
+  
+  <Tab title="Docker Compose">
+    ```bash .env.docker
+    MYSQL_HOST=mysql-db
+    MYSQL_PORT=3306
+    JWT_EXPIRATION_TIME=60
+    CORS_ALLOWED_ORIGINS=http://localhost:3000
+    ```
+    
+    **Characteristics**:
+    - Use Docker service name (`mysql-db`) as host
+    - Internal Docker network communication
+  </Tab>
+  
+  <Tab title="Production">
+    ```bash .env.production
+    MYSQL_HOST=production-db.example.com
+    MYSQL_PORT=3306
+    JWT_EXPIRATION_TIME=30
+    CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+    ```
+    
+    **Characteristics**:
+    - External managed database
+    - Shorter JWT expiration for security
+    - HTTPS-only origins
+    - Use secrets management (AWS Secrets Manager, etc.)
+  </Tab>
+</Tabs>
+
+---
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Strong Secrets" icon="lock">
+    Generate cryptographically secure random values for all secrets, especially `JWT_TOKEN` and passwords.
+  </Card>
+  
+  <Card title="Rotate Credentials" icon="arrows-rotate">
+    Regularly rotate JWT secrets, database passwords, and API credentials in production.
+  </Card>
+  
+  <Card title="Never Commit Secrets" icon="ban">
+    Add `.env` to `.gitignore`. Use environment-specific templates (`.env.example`) instead.
+  </Card>
+  
+  <Card title="Use Secrets Management" icon="vault">
+    In production, use dedicated secrets management tools like AWS Secrets Manager or HashiCorp Vault.
+  </Card>
+</CardGroup>
+
+---
+
+## Validation Checklist
+
+Before starting the application, verify:
+
+<Steps>
+  <Step title="Database Access">
+    Ensure the MySQL server is accessible and the user has proper permissions.
+  </Step>
+  
+  <Step title="JWT Secret Length">
+    Verify `JWT_TOKEN` is at least 32 characters (256 bits).
+  </Step>
+  
+  <Step title="Google Drive Setup">
+    Confirm all OAuth credentials are valid and folder IDs are correct.
+  </Step>
+  
+  <Step title="Email Configuration">
+    Test SMTP credentials with your email provider.
+  </Step>
+  
+  <Step title="CORS Origins">
+    List all legitimate frontend origins without wildcards.
+  </Step>
+</Steps>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Application fails to start with 'JWT_TOKEN must be at least 256 bits'">
+    Your `JWT_TOKEN` is too short. Generate a longer secret:
+    
+    ```bash
+    openssl rand -base64 32
+    ```
+    
+    Update your `.env` file with the new value.
+  </Accordion>
+  
+  <Accordion title="Database connection refused">
+    Verify:
+    1. MySQL server is running
+    2. `MYSQL_HOST` and `MYSQL_PORT` are correct
+    3. Firewall rules allow connection
+    4. Database user has proper permissions
+    
+    Test connection manually:
+    ```bash
+    mysql -h ${MYSQL_HOST} -P ${MYSQL_PORT} -u ${MYSQL_USER} -p
+    ```
+  </Accordion>
+  
+  <Accordion title="Google Drive upload fails">
+    Check:
+    1. OAuth credentials are valid and not expired
+    2. Refresh token has `https://www.googleapis.com/auth/drive.file` scope
+    3. All folder IDs exist and are accessible by the OAuth account
+    4. Google Drive API is enabled in Google Cloud Console
+  </Accordion>
+  
+  <Accordion title="Email sending fails">
+    For Gmail:
+    1. Ensure 2-Step Verification is enabled
+    2. Use an App Password, not your regular password
+    3. Check that "Less secure app access" is not blocking the connection
+    
+    For other providers:
+    1. Verify SMTP host and port
+    2. Check firewall rules for outbound SMTP traffic
+  </Accordion>
+  
+  <Accordion title="CORS errors in browser">
+    Add your frontend origin to `CORS_ALLOWED_ORIGINS`:
+    
+    ```bash
+    CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourfrontend.com
+    ```
+    
+    Restart the application after changing this value.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Deploy using Docker and Docker Compose
+  </Card>
+  
+  <Card title="API Authentication" icon="shield" href="/api/authentication">
+    Learn how to authenticate with JWT
+  </Card>
+</CardGroup>

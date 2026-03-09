@@ -1,0 +1,421 @@
+---
+title: "Get Portfolio Detail"
+api: "GET /api/portfolios/{slug}"
+description: "Get complete portfolio information including projects, experience, education, and skills"
+---
+
+This endpoint returns the full portfolio details for a specific user by their slug. No authentication is required. This is the main endpoint for displaying a complete portfolio page.
+
+## Path Parameters
+
+<ParamField path="slug" type="string" required>
+  The unique URL-friendly identifier for the portfolio (e.g., "john-doe")
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A descriptive message about the response
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 timestamp of when the response was generated
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Complete portfolio information
+  
+  <ResponseField name="slug" type="string" required>
+    Unique URL-friendly identifier
+  </ResponseField>
+  
+  <ResponseField name="fullName" type="string" required>
+    Full name of the portfolio owner
+  </ResponseField>
+  
+  <ResponseField name="headline" type="string" required>
+    Professional headline or tagline
+  </ResponseField>
+  
+  <ResponseField name="bio" type="string">
+    Detailed biography or professional summary
+  </ResponseField>
+  
+  <ResponseField name="contactEmail" type="string">
+    Public contact email address
+  </ResponseField>
+  
+  <ResponseField name="location" type="string">
+    Geographic location (city, country)
+  </ResponseField>
+  
+  <ResponseField name="avatarUrl" type="string">
+    URL to profile avatar image
+  </ResponseField>
+  
+  <ResponseField name="resumeUrl" type="string">
+    URL to downloadable resume/CV file
+  </ResponseField>
+  
+  <ResponseField name="tkohCollab" type="boolean" required>
+    TKOH Studios collaboration flag
+  </ResponseField>
+  
+  <ResponseField name="socialLinks" type="array">
+    Social media links and profiles
+    
+    <ResponseField name="id" type="integer">
+      Unique identifier for the social link
+    </ResponseField>
+    
+    <ResponseField name="platform" type="string">
+      Platform name (e.g., "GitHub", "LinkedIn", "Twitter")
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      Full URL to the social profile
+    </ResponseField>
+    
+    <ResponseField name="sortOrder" type="integer">
+      Display order for sorting
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="skillCategories" type="array">
+    Organized skill groups with proficiency levels
+    
+    <ResponseField name="id" type="integer">
+      Category identifier
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Category name (e.g., "Frontend", "Backend", "DevOps")
+    </ResponseField>
+    
+    <ResponseField name="sortOrder" type="integer">
+      Display order
+    </ResponseField>
+    
+    <ResponseField name="skills" type="array">
+      Skills within this category
+      
+      <ResponseField name="id" type="integer">
+        Skill identifier
+      </ResponseField>
+      
+      <ResponseField name="name" type="string">
+        Skill name (e.g., "React", "Java", "Docker")
+      </ResponseField>
+      
+      <ResponseField name="globalSkillId" type="integer">
+        Reference to global skill database
+      </ResponseField>
+      
+      <ResponseField name="level" type="integer">
+        Proficiency level (typically 1-5)
+      </ResponseField>
+      
+      <ResponseField name="icon" type="string">
+        Icon identifier or URL for the skill
+      </ResponseField>
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="projects" type="array">
+    Summary of portfolio projects
+    
+    <ResponseField name="title" type="string">
+      Project title
+    </ResponseField>
+    
+    <ResponseField name="slug" type="string">
+      URL-friendly project identifier
+    </ResponseField>
+    
+    <ResponseField name="summary" type="string">
+      Brief project description
+    </ResponseField>
+    
+    <ResponseField name="coverImage" type="string">
+      URL to project cover image
+    </ResponseField>
+    
+    <ResponseField name="featured" type="boolean">
+      Whether this project is featured
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="experiences" type="array">
+    Work experience history
+    
+    <ResponseField name="id" type="integer">
+      Experience identifier
+    </ResponseField>
+    
+    <ResponseField name="company" type="string">
+      Company name
+    </ResponseField>
+    
+    <ResponseField name="role" type="string">
+      Job title or role
+    </ResponseField>
+    
+    <ResponseField name="location" type="string">
+      Work location
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string">
+      ISO 8601 date (YYYY-MM-DD)
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string">
+      ISO 8601 date or null if current
+    </ResponseField>
+    
+    <ResponseField name="current" type="boolean">
+      Whether this is current employment
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Role description and achievements
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="education" type="array">
+    Educational background
+    
+    <ResponseField name="id" type="integer">
+      Education record identifier
+    </ResponseField>
+    
+    <ResponseField name="institution" type="string">
+      School or university name
+    </ResponseField>
+    
+    <ResponseField name="degree" type="string">
+      Degree or certification name
+    </ResponseField>
+    
+    <ResponseField name="field" type="string">
+      Field of study
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string">
+      ISO 8601 date
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string">
+      ISO 8601 date or null if in progress
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Additional details or achievements
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="certificates" type="array">
+    Professional certificates and credentials
+    
+    <ResponseField name="id" type="integer">
+      Certificate identifier
+    </ResponseField>
+    
+    <ResponseField name="educationId" type="integer">
+      Associated education record ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Certificate name
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Certificate details
+    </ResponseField>
+    
+    <ResponseField name="imageUrl" type="string">
+      URL to certificate image
+    </ResponseField>
+    
+    <ResponseField name="fileId" type="string">
+      File storage reference
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.portfoliohub.com/api/portfolios/john-doe
+```
+
+```javascript JavaScript
+const slug = 'john-doe';
+
+fetch(`https://api.portfoliohub.com/api/portfolios/${slug}`)
+  .then(response => response.json())
+  .then(portfolio => {
+    console.log(portfolio.data.fullName);
+    console.log(portfolio.data.projects);
+  });
+```
+
+```python Python
+import requests
+
+slug = 'john-doe'
+response = requests.get(f'https://api.portfoliohub.com/api/portfolios/{slug}')
+portfolio = response.json()
+
+print(f"Name: {portfolio['data']['fullName']}")
+print(f"Projects: {len(portfolio['data']['projects'])}")
+```
+
+```java Java
+String slug = "john-doe";
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.portfoliohub.com/api/portfolios/" + slug))
+    .GET()
+    .build();
+
+HttpResponse<String> response = client.send(request, 
+    HttpResponse.BodyHandlers.ofString());
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "message": "Portafolio obtenido exitosamente",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": {
+    "slug": "john-doe",
+    "fullName": "John Doe",
+    "headline": "Full Stack Developer | React & Spring Boot Expert",
+    "bio": "Passionate software engineer with 5+ years of experience building scalable web applications. Specialized in modern JavaScript frameworks and enterprise Java development.",
+    "contactEmail": "john@example.com",
+    "location": "San Francisco, CA",
+    "avatarUrl": "https://storage.example.com/avatars/john-doe.jpg",
+    "resumeUrl": "https://storage.example.com/resumes/john-doe.pdf",
+    "tkohCollab": false,
+    "socialLinks": [
+      {
+        "id": 1,
+        "platform": "GitHub",
+        "url": "https://github.com/johndoe",
+        "sortOrder": 1
+      },
+      {
+        "id": 2,
+        "platform": "LinkedIn",
+        "url": "https://linkedin.com/in/johndoe",
+        "sortOrder": 2
+      }
+    ],
+    "skillCategories": [
+      {
+        "id": 1,
+        "name": "Frontend",
+        "sortOrder": 1,
+        "skills": [
+          {
+            "id": 1,
+            "name": "React",
+            "globalSkillId": 101,
+            "level": 5,
+            "icon": "react-icon"
+          },
+          {
+            "id": 2,
+            "name": "TypeScript",
+            "globalSkillId": 102,
+            "level": 4,
+            "icon": "typescript-icon"
+          }
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "title": "E-Commerce Platform",
+        "slug": "ecommerce-platform",
+        "summary": "A full-featured online shopping platform with payment integration",
+        "coverImage": "https://storage.example.com/projects/ecommerce.jpg",
+        "featured": true
+      }
+    ],
+    "experiences": [
+      {
+        "id": 1,
+        "company": "Tech Corp",
+        "role": "Senior Software Engineer",
+        "location": "San Francisco, CA",
+        "startDate": "2020-01-15",
+        "endDate": null,
+        "current": true,
+        "description": "Leading development of microservices architecture using Spring Boot and React"
+      }
+    ],
+    "education": [
+      {
+        "id": 1,
+        "institution": "University of California",
+        "degree": "Bachelor of Science",
+        "field": "Computer Science",
+        "startDate": "2015-09-01",
+        "endDate": "2019-06-15",
+        "description": "GPA: 3.8/4.0. Dean's List all semesters."
+      }
+    ],
+    "certificates": [
+      {
+        "id": 1,
+        "educationId": 1,
+        "name": "AWS Certified Developer",
+        "description": "Associate level certification",
+        "imageUrl": "https://storage.example.com/certs/aws-cert.jpg",
+        "fileId": "cert-12345"
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+### Portfolio Not Found
+
+```json
+{
+  "success": false,
+  "message": "Profile not found with slug: invalid-slug",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": null
+}
+```
+
+## Use Cases
+
+- Display a complete portfolio page on your frontend application
+- Show comprehensive professional profiles
+- Build portfolio aggregator or showcase platforms
+- Create portfolio comparison tools
+- Generate PDF exports of portfolios
+
+## Notes
+
+- No authentication required
+- Only returns publicly visible portfolios
+- Projects array contains summaries; use the project detail endpoint for complete project information
+- Skills are organized into categories for better presentation
+- The `current` field in experiences indicates ongoing employment
+- Dates follow ISO 8601 format (YYYY-MM-DD)

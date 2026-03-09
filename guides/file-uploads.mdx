@@ -1,0 +1,600 @@
+---
+title: 'File Uploads'
+description: 'Upload images and documents to Google Drive via Portfolio Hub API'
+icon: 'upload'
+---
+
+Portfolio Hub API integrates with Google Drive to store and serve files. This guide covers uploading avatars, resumes, project covers, skill icons, and certificates.
+
+<Note>
+All upload endpoints require authentication. See the [Authentication Guide](/guides/authentication) for details.
+</Note>
+
+## Overview
+
+The file upload system uses:
+- **Google Drive API** for storage
+- **OAuth 2.0** for authentication
+- **Multipart form data** for file uploads
+- **Public sharing** for accessible URLs
+
+### Supported File Types
+
+| Upload Type | Accepted Formats | Max Size | Folder |
+|-------------|-----------------|----------|--------|
+| Avatar | JPG, PNG, GIF | 5MB | User Avatars |
+| Resume | PDF | 10MB | User Resumes |
+| Project Cover | JPG, PNG | 5MB | Projects Cover |
+| Skill Icon | SVG, PNG | 1MB | Skills Icon |
+| Certificate | PDF, JPG, PNG | 10MB | Certificates |
+
+## Google Drive Configuration
+
+The API uses OAuth 2.0 credentials to interact with Google Drive. Configuration is managed in `GoogleDriveConfig.java` and `application.properties`.
+
+### Environment Variables
+
+Configure these in your `application.properties`:
+
+```properties
+# Google Drive OAuth Configuration
+google.drive.oauth.client-id=${DRIVE_OAUTH_CLIENT_ID}
+google.drive.oauth.client-secret=${DRIVE_OAUTH_CLIENT_SECRET}
+google.drive.oauth.refresh-token=${DRIVE_OAUTH_REFRESH_TOKEN}
+
+# Google Drive Folder IDs
+google.drive.folders.user-avatars=${DRIVE_FOLDER_USER_AVATARS}
+google.drive.folders.user-resumes=${DRIVE_FOLDER_USER_RESUMES}
+google.drive.folders.projects-cover=${DRIVE_FOLDER_PROJECTS_COVER}
+google.drive.folders.skills-icon=${DRIVE_FOLDER_SKILLS_ICON}
+google.drive.folders.certificates=${DRIVE_FOLDER_CERTIFICATES}
+```
+
+### Required Environment Variables
+
+| Variable | Description | How to Get |
+|----------|-------------|------------|
+| `DRIVE_OAUTH_CLIENT_ID` | OAuth 2.0 Client ID | Google Cloud Console |
+| `DRIVE_OAUTH_CLIENT_SECRET` | OAuth 2.0 Client Secret | Google Cloud Console |
+| `DRIVE_OAUTH_REFRESH_TOKEN` | OAuth 2.0 Refresh Token | OAuth Playground |
+| `DRIVE_FOLDER_*` | Folder IDs for each file type | Create folders in Google Drive |
+
+<Steps>
+  <Step title="Create Google Cloud Project">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+    2. Create a new project or select an existing one
+    3. Enable the Google Drive API
+  </Step>
+
+  <Step title="Create OAuth 2.0 Credentials">
+    1. Navigate to "APIs & Services" > "Credentials"
+    2. Click "Create Credentials" > "OAuth client ID"
+    3. Choose "Web application"
+    4. Add `https://developers.google.com/oauthplayground` to redirect URIs
+    5. Copy the Client ID and Client Secret
+  </Step>
+
+  <Step title="Generate Refresh Token">
+    1. Go to [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/)
+    2. Click settings (gear icon) and check "Use your own OAuth credentials"
+    3. Enter your Client ID and Client Secret
+    4. Select "Drive API v3" > `https://www.googleapis.com/auth/drive.file`
+    5. Click "Authorize APIs" and follow the flow
+    6. Click "Exchange authorization code for tokens"
+    7. Copy the Refresh Token
+  </Step>
+
+  <Step title="Create Google Drive Folders">
+    1. Create 5 folders in your Google Drive
+    2. Copy each folder ID from the URL (the part after `/folders/`)
+    3. Set the folder IDs in your environment variables
+  </Step>
+</Steps>
+
+## Google Drive Service Implementation
+
+The `GoogleDriveServiceImpl.java` handles all file operations:
+
+```java
+@Service
+public class GoogleDriveServiceImpl implements GoogleDriveService {
+
+    private Drive driveService;
+
+    @Value("${google.drive.oauth.client-id}")
+    private String clientId;
+
+    @Value("${google.drive.oauth.client-secret}")
+    private String clientSecret;
+
+    @Value("${google.drive.oauth.refresh-token}")
+    private String refreshToken;
+
+    @PostConstruct
+    public void init() throws IOException, GeneralSecurityException {
+        this.driveService = buildDriveService();
+    }
+
+    private Drive buildDriveService() throws IOException, GeneralSecurityException {
+        GoogleCredentials credentials = UserCredentials.newBuilder()
+                .setClientId(clientId)
+                .setClientSecret(clientSecret)
+                .setRefreshToken(refreshToken)
+                .build()
+                .createScoped(Collections.singletonList(DriveScopes.DRIVE_FILE));
+
+        credentials.refreshAccessToken();
+
+        NetHttpTransport httpTransport = new NetHttpTransport();
+        return new Drive.Builder(httpTransport, GsonFactory.getDefaultInstance(), 
+                new HttpCredentialsAdapter(credentials))
+                .setApplicationName("Portfolio Hub API")
+                .build();
+    }
+}
+```
+
+### Upload Process
+
+From `GoogleDriveServiceImpl.java:71-100`:
+
+```java
+@Override
+public UploadResponse uploadFile(MultipartFile multipartFile, String folderId, String uniqueFilename)
+        throws IOException, GeneralSecurityException {
+
+    // 1. Create file metadata
+    File fileMetadata = new File();
+    fileMetadata.setName(uniqueFilename);
+    fileMetadata.setParents(Collections.singletonList(folderId));
+
+    // 2. Create file content
+    InputStreamContent mediaContent = new InputStreamContent(
+            multipartFile.getContentType(),
+            new ByteArrayInputStream(multipartFile.getBytes())
+    );
+
+    // 3. Upload the file
+    File uploadedFile = driveService.files().create(fileMetadata, mediaContent)
+            .setFields("id")
+            .execute();
+
+    String fileId = uploadedFile.getId();
+
+    // 4. Make the file publicly readable
+    Permission permission = new Permission()
+            .setType("anyone")
+            .setRole("reader");
+    driveService.permissions().create(fileId, permission).execute();
+
+    // 5. Return response with ID and URL
+    return new UploadResponse(fileId, getPublicViewUrl(fileId));
+}
+
+@Override
+public String getPublicViewUrl(String fileId) {
+    return "https://drive.google.com/uc?export=view&id=" + fileId;
+}
+```
+
+## Upload Endpoints
+
+All upload endpoints are in `UploadController.java` and use multipart form data.
+
+### Upload Avatar
+
+Upload a profile picture:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/api/me/upload/avatar \
+  -H "Authorization: Bearer {token}" \
+  -F "file=@avatar.jpg"
+```
+
+```javascript JavaScript (FormData)
+const formData = new FormData();
+formData.append('file', avatarFile);
+
+const response = await fetch('https://api.example.com/api/me/upload/avatar', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  },
+  body: formData
+});
+```
+
+```python Python (requests)
+import requests
+
+files = {'file': open('avatar.jpg', 'rb')}
+headers = {'Authorization': f'Bearer {token}'}
+
+response = requests.post(
+    'https://api.example.com/api/me/upload/avatar',
+    files=files,
+    headers=headers
+)
+```
+</CodeGroup>
+
+**Endpoint:** `POST /api/me/upload/avatar`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Avatar actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "fullName": "John Doe",
+    "avatarUrl": "https://drive.google.com/uc?export=view&id=1a2b3c4d5e6f7g8h9i",
+    "headline": "Full Stack Developer",
+    "bio": "..."
+  }
+}
+```
+
+### Upload Resume
+
+Upload a PDF resume/CV:
+
+```bash
+POST /api/me/upload/resume
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Form Data:**
+- `file`: PDF file
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Currículum actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "fullName": "John Doe",
+    "resumeUrl": "https://drive.google.com/uc?export=view&id=9i8h7g6f5e4d3c2b1a",
+    "avatarUrl": "https://drive.google.com/uc?export=view&id=..."
+  }
+}
+```
+
+Implementation from `UploadController.java:42-50`:
+
+```java
+@PostMapping("/resume")
+public ResponseEntity<ApiResponse<ProfileDto>> uploadResume(@RequestParam("file") MultipartFile file) {
+    try {
+        ProfileDto updatedProfile = uploadService.uploadResume(file);
+        return ResponseEntity.ok(ApiResponse.ok("Currículum actualizado exitosamente", updatedProfile));
+    } catch (IOException | GeneralSecurityException e) {
+        return new ResponseEntity<>(ApiResponse.error("Error al subir currículum: " + e.getMessage()), 
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+```
+
+### Upload Project Cover
+
+Upload a cover image for a project:
+
+```bash
+POST /api/me/upload/project/{projectId}/cover
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Path Parameters:**
+- `projectId`: ID of the project
+
+**Form Data:**
+- `file`: Image file (JPG, PNG)
+
+**Example:**
+```bash
+curl -X POST https://api.example.com/api/me/upload/project/5/cover \
+  -H "Authorization: Bearer {token}" \
+  -F "file=@project-cover.png"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Portada de proyecto actualizada",
+  "data": {
+    "id": 5,
+    "title": "E-Commerce Platform",
+    "coverImage": "https://drive.google.com/uc?export=view&id=...",
+    "summary": "Full-stack e-commerce solution",
+    "description": "..."
+  }
+}
+```
+
+### Upload Skill Icon
+
+Upload an icon for a skill:
+
+```bash
+POST /api/me/upload/skill/{skillId}/icon
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Path Parameters:**
+- `skillId`: ID of the skill
+
+**Form Data:**
+- `file`: Icon file (SVG, PNG preferred)
+
+**Example:**
+```bash
+curl -X POST https://api.example.com/api/me/upload/skill/3/icon \
+  -H "Authorization: Bearer {token}" \
+  -F "file=@react-icon.svg"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Icono de skill actualizado",
+  "data": {
+    "id": 3,
+    "name": "React",
+    "level": 85,
+    "icon": "https://drive.google.com/uc?export=view&id=...",
+    "sortOrder": 1
+  }
+}
+```
+
+### Upload Certificate File
+
+Upload a certificate document:
+
+```bash
+POST /api/me/upload/certificate/{certificateId}/file
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Path Parameters:**
+- `certificateId`: ID of the certificate
+
+**Form Data:**
+- `file`: Certificate file (PDF, JPG, PNG)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Archivo de certificado subido",
+  "data": {
+    "id": 1,
+    "title": "AWS Certified Solutions Architect",
+    "issuer": "Amazon Web Services",
+    "fileUrl": "https://drive.google.com/uc?export=view&id=...",
+    "issueDate": "2024-01-15"
+  }
+}
+```
+
+## Upload Service Implementation
+
+The `UploadService` handles file processing and entity updates. Here's the avatar upload flow:
+
+```java
+@Override
+@Transactional
+public ProfileDto uploadAvatar(MultipartFile file) throws IOException, GeneralSecurityException {
+    // 1. Get authenticated user's profile
+    CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
+            .getContext().getAuthentication().getPrincipal();
+    Long profileId = userDetails.getProfileId();
+    
+    Profile profile = profileRepository.findById(profileId)
+            .orElseThrow(() -> new ResourceNotFoundException("Profile", "id", profileId));
+
+    // 2. Generate unique filename
+    String originalFilename = file.getOriginalFilename();
+    String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+    String uniqueFilename = "avatar_" + profileId + "_" + System.currentTimeMillis() + extension;
+
+    // 3. Upload to Google Drive
+    UploadResponse uploadResponse = googleDriveService.uploadFile(
+            file, 
+            googleDriveConfig.getFolders().getUserAvatars(), 
+            uniqueFilename
+    );
+
+    // 4. Update profile with new URL
+    profile.setAvatarUrl(uploadResponse.url());
+    profileRepository.save(profile);
+
+    // 5. Return updated profile DTO
+    return profileMapper.toDto(profile);
+}
+```
+
+## Error Handling
+
+### Common Upload Errors
+
+<Tabs>
+  <Tab title="File Too Large">
+    **Status:** `413 Payload Too Large`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Maximum upload size exceeded"
+    }
+    ```
+    
+    **Solution:** Reduce file size or compress the image/PDF.
+  </Tab>
+
+  <Tab title="Invalid File Type">
+    **Status:** `400 Bad Request`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Invalid file type. Expected: JPG, PNG"
+    }
+    ```
+    
+    **Solution:** Upload a file in the accepted format.
+  </Tab>
+
+  <Tab title="Google Drive Error">
+    **Status:** `500 Internal Server Error`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Error al subir avatar: The caller does not have permission"
+    }
+    ```
+    
+    **Solution:** Check OAuth credentials and folder permissions.
+  </Tab>
+
+  <Tab title="Resource Not Found">
+    **Status:** `404 Not Found`
+    
+    ```json
+    {
+      "success": false,
+      "message": "Project with id 999 not found"
+    }
+    ```
+    
+    **Solution:** Verify the resource ID exists and belongs to your account.
+  </Tab>
+</Tabs>
+
+## File Naming Convention
+
+Files are automatically renamed to prevent conflicts:
+
+```java
+String uniqueFilename = type + "_" + entityId + "_" + timestamp + extension;
+```
+
+**Examples:**
+- `avatar_1_1710432000000.jpg`
+- `resume_1_1710432123456.pdf`
+- `project_cover_5_1710432234567.png`
+- `skill_icon_3_1710432345678.svg`
+- `certificate_1_1710432456789.pdf`
+
+## Security Considerations
+
+<Warning>
+**Important Security Notes:**
+
+1. **Validate file types** - Always check MIME types server-side
+2. **Limit file sizes** - Configure maximum upload sizes in Spring Boot
+3. **Scan for malware** - Consider implementing virus scanning for production
+4. **Use unique filenames** - Prevent file overwrites and directory traversal
+5. **Set proper permissions** - Files are public by default for portfolio viewing
+6. **Rotate credentials** - Regularly refresh OAuth tokens
+7. **Monitor usage** - Track Google Drive API quota limits
+</Warning>
+
+### Spring Boot Upload Configuration
+
+Configure upload limits in `application.properties`:
+
+```properties
+# File Upload Configuration
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+spring.servlet.multipart.enabled=true
+```
+
+## Best Practices
+
+<Steps>
+  <Step title="Optimize Images">
+    Compress images before uploading to reduce storage and improve load times:
+    - Use JPEG for photos (quality: 80-90)
+    - Use PNG for graphics with transparency
+    - Use SVG for icons when possible
+    - Target sizes: avatars (400x400px), covers (1200x630px)
+  </Step>
+
+  <Step title="Use Appropriate Formats">
+    - **Avatars:** JPG or PNG, square aspect ratio
+    - **Resumes:** PDF only, single file
+    - **Project covers:** JPG or PNG, 16:9 or 2:1 aspect ratio
+    - **Skill icons:** SVG preferred, PNG fallback
+    - **Certificates:** PDF preferred for authenticity
+  </Step>
+
+  <Step title="Handle Upload Errors">
+    Implement proper error handling in your client:
+    
+    ```javascript
+    try {
+      const response = await uploadFile(file);
+      if (response.success) {
+        console.log('Upload successful:', response.data);
+      }
+    } catch (error) {
+      if (error.status === 413) {
+        alert('File too large. Max size: 5MB');
+      } else if (error.status === 500) {
+        alert('Upload failed. Please try again.');
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Show Upload Progress">
+    Provide feedback during uploads:
+    
+    ```javascript
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', (e) => {
+      const percent = (e.loaded / e.total) * 100;
+      updateProgressBar(percent);
+    });
+    ```
+  </Step>
+</Steps>
+
+## Testing Uploads
+
+Test file uploads with Postman or cURL:
+
+```bash
+# Test avatar upload
+curl -X POST http://localhost:8080/api/me/upload/avatar \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "file=@/path/to/avatar.jpg"
+
+# Test with validation
+curl -X POST http://localhost:8080/api/me/upload/resume \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "file=@/path/to/resume.pdf" \
+  -w "\nHTTP Status: %{http_code}\n"
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Managing Portfolio" icon="briefcase" href="/guides/managing-portfolio">
+    Learn how to manage profile, experience, education, and projects
+  </Card>
+  <Card title="Public API" icon="globe" href="/guides/public-api">
+    Understand how uploaded files are served to public viewers
+  </Card>
+</CardGroup>

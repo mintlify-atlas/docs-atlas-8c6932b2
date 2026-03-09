@@ -1,0 +1,333 @@
+---
+title: 'Certificates'
+description: 'Manage professional certificates and certifications'
+---
+
+## List All Certificates
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/certificates
+```
+
+Retrieve all certificate entries for the authenticated user.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of certificate entries
+  
+  <ResponseField name="id" type="long">
+    Certificate ID
+  </ResponseField>
+  
+  <ResponseField name="educationId" type="long">
+    Associated education entry ID (optional)
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Certificate name
+  </ResponseField>
+  
+  <ResponseField name="description" type="string">
+    Certificate description
+  </ResponseField>
+  
+  <ResponseField name="imageUrl" type="string">
+    URL to certificate image
+  </ResponseField>
+  
+  <ResponseField name="fileId" type="string">
+    File ID for uploaded certificate document
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/certificates \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Certificados obtenidos",
+  "data": [
+    {
+      "id": 1,
+      "educationId": 5,
+      "name": "AWS Certified Solutions Architect",
+      "description": "Professional level certification for AWS cloud architecture",
+      "imageUrl": "https://example.com/certificates/aws-cert.jpg",
+      "fileId": "file_abc123"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Get Certificate by ID
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/certificates/{id}
+```
+
+Retrieve a specific certificate entry by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Certificate ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Certificate details (same structure as list items)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/certificates/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Certificado obtenido",
+  "data": {
+    "id": 1,
+    "educationId": 5,
+    "name": "AWS Certified Solutions Architect",
+    "description": "Professional level certification for AWS cloud architecture",
+    "imageUrl": "https://example.com/certificates/aws-cert.jpg",
+    "fileId": "file_abc123"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Create Certificate
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/certificates
+```
+
+Create a new certificate entry.
+
+<Warning>
+  After creating a certificate, use the file upload endpoint to attach the certificate document.
+</Warning>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  Certificate name (max 255 characters)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Certificate description (max 65535 characters)
+</ParamField>
+
+<ParamField body="educationId" type="long">
+  ID of associated education entry (optional)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Created certificate entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/certificates \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "AWS Certified Solutions Architect",
+    "description": "Professional level certification for AWS cloud architecture",
+    "educationId": 5
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Certificado creado. Sube el archivo.",
+  "data": {
+    "id": 1,
+    "educationId": 5,
+    "name": "AWS Certified Solutions Architect",
+    "description": "Professional level certification for AWS cloud architecture",
+    "imageUrl": null,
+    "fileId": null
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update Certificate
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/certificates/{id}
+```
+
+Update an existing certificate entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Certificate ID to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  Certificate name (max 255 characters)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Certificate description (max 65535 characters)
+</ParamField>
+
+<ParamField body="educationId" type="long">
+  ID of associated education entry (optional)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated certificate entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/certificates/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "AWS Certified Solutions Architect - Professional",
+    "description": "Advanced professional level certification for AWS cloud architecture",
+    "educationId": 5
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Certificado actualizado",
+  "data": {
+    "id": 1,
+    "educationId": 5,
+    "name": "AWS Certified Solutions Architect - Professional",
+    "description": "Advanced professional level certification for AWS cloud architecture",
+    "imageUrl": "https://example.com/certificates/aws-cert.jpg",
+    "fileId": "file_abc123"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Delete Certificate
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/certificates/{id}
+```
+
+Delete a certificate entry.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Certificate ID to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/certificates/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Certificado eliminado",
+  "data": null
+}
+```
+</CodeGroup>

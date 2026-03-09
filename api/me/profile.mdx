@@ -1,0 +1,241 @@
+---
+title: 'Profile'
+description: 'Manage authenticated user profile information'
+---
+
+## Get My Profile
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+<ParamField query="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+```http
+GET /api/me/profile
+```
+
+Retrieve the authenticated user's profile information.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Profile information
+  
+  <ResponseField name="id" type="long">
+    Profile ID
+  </ResponseField>
+  
+  <ResponseField name="slug" type="string">
+    Unique profile slug
+  </ResponseField>
+  
+  <ResponseField name="fullName" type="string">
+    Full name of the user
+  </ResponseField>
+  
+  <ResponseField name="headline" type="string">
+    Professional headline
+  </ResponseField>
+  
+  <ResponseField name="bio" type="string">
+    User biography
+  </ResponseField>
+  
+  <ResponseField name="contactEmail" type="string">
+    Contact email address
+  </ResponseField>
+  
+  <ResponseField name="location" type="string">
+    User location
+  </ResponseField>
+  
+  <ResponseField name="avatarUrl" type="string">
+    URL to profile avatar image
+  </ResponseField>
+  
+  <ResponseField name="resumeUrl" type="string">
+    URL to user's resume/CV
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Perfil obtenido exitosamente",
+  "data": {
+    "id": 1,
+    "slug": "john-doe",
+    "fullName": "John Doe",
+    "headline": "Full Stack Developer",
+    "bio": "Passionate developer with 5+ years of experience...",
+    "contactEmail": "john@example.com",
+    "location": "San Francisco, CA",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "resumeUrl": "https://example.com/resume.pdf"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update My Profile
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/profile
+```
+
+Update the authenticated user's profile information.
+
+### Request Body
+
+<ParamField body="fullName" type="string" required>
+  Full name (max 120 characters)
+</ParamField>
+
+<ParamField body="headline" type="string" required>
+  Professional headline (max 160 characters)
+</ParamField>
+
+<ParamField body="bio" type="string" required>
+  User biography (max 5000 characters)
+</ParamField>
+
+<ParamField body="contactEmail" type="string" required>
+  Contact email address (must be valid email, max 160 characters)
+</ParamField>
+
+<ParamField body="location" type="string">
+  User location (max 100 characters)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated profile information (same structure as GET response)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullName": "John Doe",
+    "headline": "Senior Full Stack Developer",
+    "bio": "Passionate developer with extensive experience in modern web technologies...",
+    "contactEmail": "john@example.com",
+    "location": "San Francisco, CA"
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Perfil actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "slug": "john-doe",
+    "fullName": "John Doe",
+    "headline": "Senior Full Stack Developer",
+    "bio": "Passionate developer with extensive experience in modern web technologies...",
+    "contactEmail": "john@example.com",
+    "location": "San Francisco, CA",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "resumeUrl": "https://example.com/resume.pdf"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update Contact Email
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/settings/contact-email
+```
+
+Update only the contact email address for the authenticated user.
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  New contact email address (must be valid email format)
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated profile information with new contact email
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/settings/contact-email \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newemail@example.com"
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Email de contacto actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "slug": "john-doe",
+    "fullName": "John Doe",
+    "headline": "Senior Full Stack Developer",
+    "bio": "Passionate developer...",
+    "contactEmail": "newemail@example.com",
+    "location": "San Francisco, CA",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "resumeUrl": "https://example.com/resume.pdf"
+  }
+}
+```
+</CodeGroup>

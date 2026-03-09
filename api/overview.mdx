@@ -1,0 +1,224 @@
+---
+title: 'API Overview'
+description: 'Learn about the Portfolio Hub API structure, response formats, and best practices'
+---
+
+## Base URL
+
+The Portfolio Hub API is accessible at:
+
+```
+https://your-domain.com/api
+```
+
+<Note>
+  All API endpoints are prefixed with `/api`. For example, to access portfolios, use `/api/portfolios`.
+</Note>
+
+## Request Format
+
+The API accepts JSON-formatted request bodies for POST, PUT, and PATCH requests. Always include the `Content-Type` header:
+
+```bash
+Content-Type: application/json
+```
+
+## Response Format
+
+All API responses follow a consistent structure wrapped in an `ApiResponse` object:
+
+<CodeGroup>
+
+```json Success Response
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": {
+    // Response payload
+  },
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+```json Error Response
+{
+  "success": false,
+  "message": "Error description",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+</CodeGroup>
+
+### Response Fields
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the request was successful
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable message describing the result
+</ResponseField>
+
+<ResponseField name="data" type="object | null">
+  The response payload. `null` for error responses or operations without return data
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 timestamp of when the response was generated
+</ResponseField>
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes to indicate the success or failure of requests:
+
+| Status Code | Description |
+|-------------|-------------|
+| `200 OK` | Request successful |
+| `201 Created` | Resource created successfully |
+| `400 Bad Request` | Invalid request format or validation error |
+| `401 Unauthorized` | Authentication required or invalid credentials |
+| `403 Forbidden` | Insufficient permissions |
+| `404 Not Found` | Resource not found |
+| `409 Conflict` | Request conflicts with current state (e.g., duplicate email) |
+| `500 Internal Server Error` | Server error |
+
+## Error Handling
+
+### Validation Errors
+
+When validation fails (400 Bad Request), the response includes field-specific error details:
+
+```json
+{
+  "success": false,
+  "message": "Error de validación",
+  "data": {
+    "email": "must be a well-formed email address",
+    "password": "size must be between 8 and 100"
+  },
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+### Authentication Errors
+
+Invalid credentials return a 401 status:
+
+```json
+{
+  "success": false,
+  "message": "Credenciales inválidas",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+### Resource Not Found
+
+404 errors provide context about the missing resource:
+
+```json
+{
+  "success": false,
+  "message": "Profile not found with slug: john-doe",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+### Conflict Errors
+
+409 errors occur when operations conflict with existing data:
+
+```json
+{
+  "success": false,
+  "message": "El correo ya está en uso. Por favor intente otro.",
+  "data": null,
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
+
+## CORS Configuration
+
+The API supports Cross-Origin Resource Sharing (CORS) with the following configuration:
+
+- **Allowed Methods**: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`, `PATCH`
+- **Allowed Headers**: `Authorization`, `Content-Type`, `Cache-Control`, `ngrok-skip-browser-warning`
+- **Credentials**: Allowed
+- **Origins**: Configured via environment variable `CORS_ALLOWED_ORIGINS`
+
+<Warning>
+  CORS origins must be properly configured in production. Contact your administrator for allowed origins.
+</Warning>
+
+## Pagination
+
+<Note>
+  Currently, the Portfolio Hub API does not implement pagination for list endpoints. All results are returned in a single response. This may change in future versions for endpoints with large datasets.
+</Note>
+
+## Rate Limiting
+
+<Note>
+  The Portfolio Hub API does not currently enforce rate limiting. However, please use the API responsibly to ensure optimal performance for all users.
+</Note>
+
+## Public vs Authenticated Endpoints
+
+The API has two types of endpoints:
+
+### Public Endpoints (No Authentication Required)
+
+- `GET /api/portfolios` - List all public portfolios
+- `GET /api/portfolios/{slug}` - Get portfolio details
+- `GET /api/portfolios/{profileSlug}/projects/{projectSlug}` - Get project details
+- `POST /api/portfolios/{slug}/contact` - Send contact message
+- `GET /api/skills` - List all global skills
+- `POST /api/auth/register` - Register new account
+- `POST /api/auth/login` - Login to account
+
+### Authenticated Endpoints
+
+- `/api/me/**` - User profile and portfolio management (requires authentication)
+- `/api/admin/**` - Administrative functions (requires `ROLE_ADMIN` authority)
+
+<Warning>
+  All other endpoints require authentication. See the [Authentication](/api/authentication) guide for details.
+</Warning>
+
+## API Versioning
+
+<Note>
+  The current API does not use explicit versioning. Breaking changes will be communicated in advance, and a versioning strategy may be introduced in future releases.
+</Note>
+
+## Best Practices
+
+1. **Always check the `success` field** before processing the `data` field
+2. **Handle all documented HTTP status codes** in your client application
+3. **Use HTTPS** in production environments
+4. **Store JWT tokens securely** - never expose them in URLs or logs
+5. **Validate data** on the client side before sending requests to reduce errors
+6. **Implement exponential backoff** for retrying failed requests
+7. **Parse timestamps** as ISO 8601 format with timezone support
+
+## OpenAPI Documentation
+
+Interactive API documentation is available via Swagger UI:
+
+```
+https://your-domain.com/swagger-ui/
+```
+
+OpenAPI specification:
+
+```
+https://your-domain.com/v3/api-docs
+```
+
+<Note>
+  Swagger UI provides an interactive interface to explore and test all API endpoints.
+</Note>

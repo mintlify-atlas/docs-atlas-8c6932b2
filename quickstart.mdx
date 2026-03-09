@@ -1,80 +1,484 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: 'Quickstart'
+description: 'Get started with Portfolio Hub API in under 5 minutes'
+icon: 'rocket'
 ---
 
-## Get started in three steps
+Get your Portfolio Hub API up and running, create your first user account, and make authenticated API requests.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Before you begin, ensure you have the following installed on your system:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Java 21 (JDK)" icon="java">
+    Required to run the Spring Boot application
+  </Card>
+  <Card title="Maven 3.9+" icon="box">
+    Build tool for managing dependencies
+  </Card>
+  <Card title="MySQL 8.0+" icon="database">
+    Database for storing portfolio data
+  </Card>
+  <Card title="Git" icon="git">
+    Version control for cloning the repository
+  </Card>
 </CardGroup>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  You can verify your installations by running:
+  ```bash
+  java -version
+  mvn -version
+  mysql --version
+  ```
 </Note>
+
+## Step 1: Clone and Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the Portfolio Hub API repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/yourusername/portfolio-hub-api.git
+    cd portfolio-hub-api
+    ```
+  </Step>
+
+  <Step title="Create MySQL database">
+    Create a new MySQL database for the application:
+    
+    ```bash
+    mysql -u root -p
+    ```
+    
+    ```sql
+    CREATE DATABASE studiostkoh.portafolio;
+    EXIT;
+    ```
+    
+    <Note>
+      Flyway will automatically create all required tables when you first run the application.
+    </Note>
+  </Step>
+
+  <Step title="Configure environment variables">
+    Set up the required environment variables. Create a `.env` file or export them directly:
+    
+    ```bash
+    # Database Configuration
+    export MYSQL_HOST=localhost
+    export MYSQL_PORT=3306
+    export MYSQL_DATABASE=studiostkoh.portafolio
+    export MYSQL_USER=your_username
+    export MYSQL_PASSWORD=your_password
+    
+    # JWT Configuration
+    export JWT_TOKEN=your_secret_key_at_least_256_bits_long_for_security
+    export JWT_EXPIRATION_TIME=60
+    
+    # CORS Configuration
+    export CORS_ALLOWED_ORIGINS=http://localhost:3000
+    ```
+    
+    <Warning>
+      The JWT_TOKEN must be a strong, random string. Never use a simple password or commit this value to version control.
+    </Warning>
+  </Step>
+</Steps>
+
+## Step 2: Run the Application
+
+Start the Portfolio Hub API server:
+
+<CodeGroup>
+```bash Maven Wrapper
+./mvnw spring-boot:run
+```
+
+```bash Maven
+mvn spring-boot:run
+```
+</CodeGroup>
+
+You should see output similar to:
+
+```
+Started PortfolioApplication in 5.432 seconds (process running for 5.891)
+```
+
+The API is now running at `http://localhost:8080`
+
+<Tip>
+  Access the interactive API documentation at: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+</Tip>
+
+## Step 3: Register Your First User
+
+Create a new user account using the `/api/auth/register` endpoint:
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullName": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:8080/api/auth/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    fullName: 'John Doe',
+    email: 'john.doe@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python (Requests)
+import requests
+
+response = requests.post(
+    'http://localhost:8080/api/auth/register',
+    json={
+        'fullName': 'John Doe',
+        'email': 'john.doe@example.com',
+        'password': 'securePassword123'
+    }
+)
+
+print(response.json())
+```
+</CodeGroup>
+
+### Request Requirements
+
+The `RegisterRequest` accepts the following fields:
+
+| Field | Type | Validation | Description |
+|-------|------|------------|-------------|
+| `fullName` | string | 3-120 characters, required | User's full name |
+| `email` | string | Valid email, max 150 characters, required | User's email address |
+| `password` | string | Min 8 characters, max 100, required | Account password |
+
+### Successful Response
+
+```json
+{
+  "success": true,
+  "message": "Usuario registrado exitosamente",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  },
+  "timestamp": "2026-03-09T10:15:30.123Z"
+}
+```
+
+<Note>
+  The API automatically creates a profile for each new user and returns a JWT token that you can use immediately.
+</Note>
+
+## Step 4: Login to Your Account
+
+Authenticate with your credentials to obtain a JWT token:
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:8080/api/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'john.doe@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+const token = data.data.token;
+```
+
+```python Python (Requests)
+import requests
+
+response = requests.post(
+    'http://localhost:8080/api/auth/login',
+    json={
+        'email': 'john.doe@example.com',
+        'password': 'securePassword123'
+    }
+)
+
+token = response.json()['data']['token']
+```
+</CodeGroup>
+
+### Successful Response
+
+```json
+{
+  "success": true,
+  "message": "Login exitoso",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  },
+  "timestamp": "2026-03-09T10:20:45.456Z"
+}
+```
+
+<Warning>
+  Store the JWT token securely. You'll need to include it in the `Authorization` header for all authenticated requests.
+</Warning>
+
+## Step 5: Make Your First Authenticated Request
+
+Use the JWT token to access protected endpoints. Let's fetch your profile:
+
+<CodeGroup>
+```bash cURL
+curl -X GET http://localhost:8080/api/me/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:8080/api/me/profile', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+
+const profile = await response.json();
+console.log(profile);
+```
+
+```python Python (Requests)
+import requests
+
+headers = {
+    'Authorization': f'Bearer {token}'
+}
+
+response = requests.get(
+    'http://localhost:8080/api/me/profile',
+    headers=headers
+)
+
+profile = response.json()
+print(profile)
+```
+</CodeGroup>
+
+### Successful Response
+
+```json
+{
+  "success": true,
+  "message": "Perfil obtenido exitosamente",
+  "data": {
+    "id": 1,
+    "fullName": "John Doe",
+    "slug": "john-doe",
+    "tagline": null,
+    "bio": null,
+    "avatarUrl": null,
+    "resumeUrl": null,
+    "contactEmail": null
+  },
+  "timestamp": "2026-03-09T10:25:30.789Z"
+}
+```
+
+## Step 6: Update Your Profile
+
+Now let's update your profile with additional information:
+
+<CodeGroup>
+```bash cURL
+curl -X PUT http://localhost:8080/api/me/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tagline": "Full Stack Developer",
+    "bio": "Passionate software engineer with 5+ years of experience",
+    "location": "San Francisco, CA"
+  }'
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:8080/api/me/profile', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    tagline: 'Full Stack Developer',
+    bio: 'Passionate software engineer with 5+ years of experience',
+    location: 'San Francisco, CA'
+  })
+});
+
+const updatedProfile = await response.json();
+```
+
+```python Python (Requests)
+import requests
+
+headers = {
+    'Authorization': f'Bearer {token}',
+    'Content-Type': 'application/json'
+}
+
+response = requests.put(
+    'http://localhost:8080/api/me/profile',
+    headers=headers,
+    json={
+        'tagline': 'Full Stack Developer',
+        'bio': 'Passionate software engineer with 5+ years of experience',
+        'location': 'San Francisco, CA'
+    }
+)
+
+updated_profile = response.json()
+```
+</CodeGroup>
+
+### Successful Response
+
+```json
+{
+  "success": true,
+  "message": "Perfil actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "fullName": "John Doe",
+    "slug": "john-doe",
+    "tagline": "Full Stack Developer",
+    "bio": "Passionate software engineer with 5+ years of experience",
+    "location": "San Francisco, CA",
+    "avatarUrl": null,
+    "resumeUrl": null,
+    "contactEmail": null
+  },
+  "timestamp": "2026-03-09T10:30:15.234Z"
+}
+```
+
+## Next Steps
+
+Congratulations! You've successfully set up Portfolio Hub API and made your first authenticated requests. Here's what you can explore next:
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/guides/authentication">
+    Learn about JWT tokens, security, and session management
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore all available endpoints and their usage
+  </Card>
+  <Card title="Managing Portfolios" icon="briefcase" href="/guides/managing-portfolio">
+    Add projects, experiences, education, and skills
+  </Card>
+  <Card title="File Uploads" icon="cloud-arrow-up" href="/guides/file-uploads">
+    Upload avatars, resumes, and project images to Google Drive
+  </Card>
+</CardGroup>
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Connection refused to MySQL">
+    Ensure MySQL is running and accessible on the configured host and port:
+    ```bash
+    mysql -h localhost -u your_username -p
+    ```
+    
+    Check that the `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, and `MYSQL_PASSWORD` environment variables are correctly set.
+  </Accordion>
+
+  <Accordion title="Invalid JWT token error">
+    JWT tokens expire based on the `JWT_EXPIRATION_TIME` setting (default: 60 minutes). If you receive a 401 Unauthorized error, login again to get a fresh token.
+  </Accordion>
+
+  <Accordion title="Flyway migration errors">
+    If you encounter Flyway migration issues, ensure your database schema is empty on first run. Flyway will create all necessary tables automatically.
+    
+    To reset the database:
+    ```sql
+    DROP DATABASE studiostkoh.portafolio;
+    CREATE DATABASE studiostkoh.portafolio;
+    ```
+  </Accordion>
+
+  <Accordion title="Port 8080 already in use">
+    If port 8080 is already in use, you can change the server port by adding:
+    ```bash
+    export SERVER_PORT=8081
+    ```
+    
+    Or add to `application.properties`:
+    ```properties
+    server.port=8081
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## API Response Structure
+
+All Portfolio Hub API endpoints return responses in a consistent format:
+
+```typescript
+{
+  success: boolean;      // Indicates if the request was successful
+  message: string;       // Human-readable message
+  data: T | null;        // Response data (type varies by endpoint)
+  timestamp: string;     // ISO 8601 timestamp
+}
+```
+
+### Success Response Example
+
+```json
+{
+  "success": true,
+  "message": "Perfil obtenido exitosamente",
+  "data": { /* ... */ },
+  "timestamp": "2026-03-09T10:15:30.123Z"
+}
+```
+
+### Error Response Example
+
+```json
+{
+  "success": false,
+  "message": "Email already in use",
+  "data": null,
+  "timestamp": "2026-03-09T10:15:30.123Z"
+}
+```
+
+<Tip>
+  Always check the `success` field before processing the `data` to ensure your request completed successfully.
+</Tip>

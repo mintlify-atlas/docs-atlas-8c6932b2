@@ -1,0 +1,345 @@
+---
+title: 'Social Links'
+description: 'Manage social media and external profile links'
+---
+
+## List All Social Links
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/social-links
+```
+
+Retrieve all social media links for the authenticated user.
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of social link entries
+  
+  <ResponseField name="id" type="long">
+    Social link ID
+  </ResponseField>
+  
+  <ResponseField name="platform" type="string">
+    Social media platform name (e.g., "GitHub", "LinkedIn", "Twitter")
+  </ResponseField>
+  
+  <ResponseField name="url" type="string">
+    Full URL to the social profile
+  </ResponseField>
+  
+  <ResponseField name="sortOrder" type="integer">
+    Display order for sorting links
+  </ResponseField>
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/social-links \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Redes sociales obtenidas exitosamente",
+  "data": [
+    {
+      "id": 1,
+      "platform": "GitHub",
+      "url": "https://github.com/johndoe",
+      "sortOrder": 1
+    },
+    {
+      "id": 2,
+      "platform": "LinkedIn",
+      "url": "https://linkedin.com/in/johndoe",
+      "sortOrder": 2
+    },
+    {
+      "id": 3,
+      "platform": "Twitter",
+      "url": "https://twitter.com/johndoe",
+      "sortOrder": 3
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Get Social Link by ID
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+GET /api/me/social-links/{id}
+```
+
+Retrieve a specific social link entry by ID.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Social link ID
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Social link details (same structure as list items)
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.portfoliohub.com/api/me/social-links/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Red social obtenida",
+  "data": {
+    "id": 1,
+    "platform": "GitHub",
+    "url": "https://github.com/johndoe",
+    "sortOrder": 1
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Create Social Link
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+POST /api/me/social-links
+```
+
+Create a new social media link.
+
+### Request Body
+
+<ParamField body="platform" type="string" required>
+  Social media platform name (max 50 characters)
+</ParamField>
+
+<ParamField body="url" type="string" required>
+  Full URL to the social profile (must be valid URL, max 512 characters)
+</ParamField>
+
+<ParamField body="sortOrder" type="integer" required>
+  Display order for sorting links
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Created social link entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/me/social-links \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "platform": "GitHub",
+    "url": "https://github.com/johndoe",
+    "sortOrder": 1
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Red social creada exitosamente",
+  "data": {
+    "id": 1,
+    "platform": "GitHub",
+    "url": "https://github.com/johndoe",
+    "sortOrder": 1
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Update Social Link
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+PUT /api/me/social-links/{id}
+```
+
+Update an existing social media link.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Social link ID to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="platform" type="string" required>
+  Social media platform name (max 50 characters)
+</ParamField>
+
+<ParamField body="url" type="string" required>
+  Full URL to the social profile (must be valid URL, max 512 characters)
+</ParamField>
+
+<ParamField body="sortOrder" type="integer" required>
+  Display order for sorting links
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated social link entry
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.portfoliohub.com/api/me/social-links/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "platform": "GitHub",
+    "url": "https://github.com/johndoe-updated",
+    "sortOrder": 1
+  }'
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Red social actualizada exitosamente",
+  "data": {
+    "id": 1,
+    "platform": "GitHub",
+    "url": "https://github.com/johndoe-updated",
+    "sortOrder": 1
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Delete Social Link
+
+<Note>
+  **Authentication Required**: This endpoint requires a valid JWT token.
+</Note>
+
+```http
+DELETE /api/me/social-links/{id}
+```
+
+Delete a social media link.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  Social link ID to delete
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="string">
+  Response status ("success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  No data returned on successful deletion
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.portfoliohub.com/api/me/social-links/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json Response
+{
+  "status": "success",
+  "message": "Red social eliminada exitosamente",
+  "data": null
+}
+```
+</CodeGroup>
+
+---
+
+## Common Social Platforms
+
+Here are some commonly used platform names for consistency:
+
+- **GitHub** - For GitHub profiles
+- **LinkedIn** - For LinkedIn profiles
+- **Twitter** - For Twitter/X profiles
+- **Instagram** - For Instagram profiles
+- **Facebook** - For Facebook profiles
+- **YouTube** - For YouTube channels
+- **Medium** - For Medium blogs
+- **Dev.to** - For Dev.to profiles
+- **Stack Overflow** - For Stack Overflow profiles
+- **Behance** - For Behance portfolios
+- **Dribbble** - For Dribbble portfolios
+- **CodePen** - For CodePen profiles
+- **Website** - For personal websites

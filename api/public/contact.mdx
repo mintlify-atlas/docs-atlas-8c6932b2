@@ -1,0 +1,325 @@
+---
+title: "Send Contact Message"
+api: "POST /api/portfolios/{slug}/contact"
+description: "Submit a contact form message to a portfolio owner"
+---
+
+This endpoint allows visitors to send contact messages to portfolio owners. No authentication is required. The portfolio owner will receive an email notification with the message details.
+
+## Path Parameters
+
+<ParamField path="slug" type="string" required>
+  The portfolio owner's unique slug identifier (e.g., "john-doe")
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  Sender's full name (max 120 characters)
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Sender's email address (max 160 characters, must be valid email format)
+</ParamField>
+
+<ParamField body="message" type="string" required>
+  The contact message content (max 5000 characters)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates if the message was sent successfully
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A descriptive message about the response
+</ResponseField>
+
+<ResponseField name="timestamp" type="string" required>
+  ISO 8601 timestamp of when the response was generated
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always null for this endpoint
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.portfoliohub.com/api/portfolios/john-doe/contact \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "message": "Hi John, I came across your portfolio and would love to discuss a potential collaboration on a React project. Are you available for freelance work?"
+  }'
+```
+
+```javascript JavaScript
+const sendContactMessage = async (slug, contactData) => {
+  const response = await fetch(
+    `https://api.portfoliohub.com/api/portfolios/${slug}/contact`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(contactData),
+    }
+  );
+  
+  return response.json();
+};
+
+// Usage
+const message = {
+  name: 'Jane Smith',
+  email: 'jane.smith@example.com',
+  message: 'Hi John, I came across your portfolio and would love to discuss a potential collaboration.'
+};
+
+sendContactMessage('john-doe', message)
+  .then(result => console.log(result));
+```
+
+```python Python
+import requests
+import json
+
+slug = 'john-doe'
+contact_data = {
+    'name': 'Jane Smith',
+    'email': 'jane.smith@example.com',
+    'message': 'Hi John, I came across your portfolio and would love to discuss a potential collaboration.'
+}
+
+response = requests.post(
+    f'https://api.portfoliohub.com/api/portfolios/{slug}/contact',
+    headers={'Content-Type': 'application/json'},
+    data=json.dumps(contact_data)
+)
+
+result = response.json()
+print(f"Success: {result['success']}")
+print(f"Message: {result['message']}")
+```
+
+```java Java
+import java.net.http.*;
+import java.net.URI;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+
+String slug = "john-doe";
+Map<String, String> contactData = Map.of(
+    "name", "Jane Smith",
+    "email", "jane.smith@example.com",
+    "message", "Hi John, I came across your portfolio and would love to discuss a potential collaboration."
+);
+
+ObjectMapper mapper = new ObjectMapper();
+String jsonBody = mapper.writeValueAsString(contactData);
+
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.portfoliohub.com/api/portfolios/" + slug + "/contact"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+    .build();
+
+HttpResponse<String> response = client.send(request, 
+    HttpResponse.BodyHandlers.ofString());
+```
+
+```typescript TypeScript
+interface ContactRequest {
+  name: string;
+  email: string;
+  message: string;
+}
+
+interface ContactResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: null;
+}
+
+const sendContactMessage = async (
+  portfolioSlug: string,
+  contactData: ContactRequest
+): Promise<ContactResponse> => {
+  const response = await fetch(
+    `https://api.portfoliohub.com/api/portfolios/${portfolioSlug}/contact`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(contactData),
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+};
+
+// Usage with form handling
+const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.currentTarget);
+  const contactData: ContactRequest = {
+    name: formData.get('name') as string,
+    email: formData.get('email') as string,
+    message: formData.get('message') as string,
+  };
+  
+  try {
+    const result = await sendContactMessage('john-doe', contactData);
+    console.log('Message sent successfully:', result);
+  } catch (error) {
+    console.error('Failed to send message:', error);
+  }
+};
+```
+
+</CodeGroup>
+
+## Example Response
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Mensaje enviado exitosamente",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": null
+}
+```
+
+## Error Responses
+
+### Portfolio Not Found
+
+```json
+{
+  "success": false,
+  "message": "Profile not found with slug: invalid-slug",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": null
+}
+```
+
+### Validation Errors
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": {
+    "name": "Name cannot be empty",
+    "email": "Must be a valid email address",
+    "message": "Message cannot be empty"
+  }
+}
+```
+
+### Invalid Email Format
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": {
+    "email": "Must be a valid email address"
+  }
+}
+```
+
+### Message Too Long
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "timestamp": "2026-03-09T10:30:00Z",
+  "data": {
+    "message": "Message must not exceed 5000 characters"
+  }
+}
+```
+
+## Validation Rules
+
+### Name Field
+- Required: Yes
+- Max length: 120 characters
+- Cannot be blank
+
+### Email Field
+- Required: Yes
+- Max length: 160 characters
+- Must be valid email format
+- Cannot be blank
+
+### Message Field
+- Required: Yes
+- Max length: 5000 characters
+- Cannot be blank
+
+## Behavior
+
+1. When a message is successfully submitted:
+   - The message is saved to the database with status "NEW"
+   - An email notification is sent to the portfolio owner's registered email
+   - The sender receives a success response
+
+2. The portfolio owner receives an email containing:
+   - Sender's name and email
+   - The complete message
+   - A link to view the message in their dashboard
+
+3. Messages are stored and can be managed through the authenticated API endpoints
+
+## Use Cases
+
+- Contact forms on portfolio websites
+- Inquiry submission for freelance work
+- Collaboration requests
+- General networking and outreach
+- Job opportunities and recruitment
+
+## Rate Limiting
+
+While this endpoint doesn't require authentication, it's recommended to implement client-side rate limiting to prevent abuse:
+- Disable submit button for 5-10 seconds after successful submission
+- Show confirmation message to user
+- Clear form fields after successful submission
+
+## Security Notes
+
+- No authentication required (public endpoint)
+- All fields are validated on the server side
+- Email addresses are validated for proper format
+- Messages are sanitized before storage
+- Portfolio owners are notified via email automatically
+- Consider implementing CAPTCHA on the frontend to prevent spam
+
+## Best Practices
+
+1. **Frontend Validation**: Implement client-side validation matching server rules for better UX
+2. **Error Handling**: Display user-friendly error messages for validation failures
+3. **Success Feedback**: Show clear confirmation when message is sent successfully
+4. **Form Reset**: Clear the form after successful submission
+5. **Loading States**: Show loading indicator during submission
+6. **Spam Prevention**: Consider adding CAPTCHA or honeypot fields
