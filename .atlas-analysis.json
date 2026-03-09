@@ -1,0 +1,136 @@
+{
+  "projectType": "api-service",
+  "projectName": "Portfolio Hub API",
+  "projectDescription": "A Spring Boot REST API for managing and exposing professional portfolios with JWT authentication, Google Drive integration, and public portfolio endpoints.",
+  "theme": "palm",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Setup",
+            "pages": [
+              "setup/installation",
+              "setup/configuration",
+              "setup/database"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/authentication",
+              "guides/managing-portfolio",
+              "guides/file-uploads",
+              "guides/public-api",
+              "guides/email-notifications"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker",
+              "deployment/environment-variables"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/register",
+              "api/auth/login"
+            ]
+          },
+          {
+            "group": "Portfolio Management",
+            "pages": [
+              "api/me/profile",
+              "api/me/experience",
+              "api/me/education",
+              "api/me/certificates",
+              "api/me/projects",
+              "api/me/skills",
+              "api/me/social-links"
+            ]
+          },
+          {
+            "group": "File Uploads",
+            "pages": [
+              "api/uploads/overview"
+            ]
+          },
+          {
+            "group": "Public Endpoints",
+            "pages": [
+              "api/public/list-portfolios",
+              "api/public/portfolio-detail",
+              "api/public/project-detail",
+              "api/public/contact"
+            ]
+          },
+          {
+            "group": "Admin",
+            "pages": [
+              "api/admin/overview"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "JWT-based authentication with Spring Security",
+    "Complete CRUD operations for portfolio entities (profile, experience, education, projects, skills, certificates)",
+    "Google Drive integration for file uploads (avatars, resumes, project covers, skill icons)",
+    "Public API for viewing portfolios without authentication",
+    "Email notifications via SMTP",
+    "MySQL database with Flyway migrations",
+    "RESTful API design with comprehensive validation",
+    "Docker support for containerized deployment"
+  ],
+  "publicApiSurface": [
+    "POST /api/auth/register - Register new user",
+    "POST /api/auth/login - Login and get JWT token",
+    "GET /api/me/profile - Get authenticated user's profile",
+    "PUT /api/me/profile - Update profile",
+    "GET /api/me/experience - Get user experiences",
+    "POST /api/me/experience - Create experience entry",
+    "GET /api/me/education - Get user education",
+    "POST /api/me/education - Create education entry",
+    "GET /api/me/certificates - Get user certificates",
+    "POST /api/me/certificates - Create certificate",
+    "GET /api/me/projects - Get user projects",
+    "POST /api/me/projects - Create project",
+    "GET /api/me/skills - Get user skills and categories",
+    "POST /api/me/skills/batch - Create multiple skills",
+    "GET /api/me/social-links - Get user social links",
+    "POST /api/me/social-links - Create social link",
+    "POST /api/me/upload/* - Upload files to Google Drive",
+    "GET /api/portfolios - List all public portfolios",
+    "GET /api/portfolios/{slug} - Get portfolio by slug",
+    "GET /api/portfolios/{profileSlug}/projects/{projectSlug} - Get project details",
+    "POST /api/portfolios/{slug}/contact - Send contact message",
+    "POST /api/admin/profiles/{profileId}/toggle-collaborator - Toggle collaborator status"
+  ]
+}
