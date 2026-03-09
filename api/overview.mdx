@@ -8,12 +8,38 @@ description: 'Learn about the Portfolio Hub API structure, response formats, and
 The Portfolio Hub API is accessible at:
 
 ```
-https://your-domain.com/api
+https://your-domain.com
 ```
 
 <Note>
-  All API endpoints are prefixed with `/api`. For example, to access portfolios, use `/api/portfolios`.
+  Most API endpoints are prefixed with `/api`. For example, to access portfolios, use `/api/portfolios`.
 </Note>
+
+### Health Check
+
+To verify that the API is online and accessible, use the root endpoint:
+
+```bash
+GET /
+```
+
+This endpoint returns API status information including version, uptime, and documentation links. No authentication is required.
+
+```json Example Response
+{
+  "success": true,
+  "message": "Bienvenido a Portfolio Hub API. El servicio está funcionando correctamente.",
+  "data": {
+    "app": "Portfolio Hub API",
+    "version": "0.5-M1",
+    "status": "ONLINE",
+    "serverTime": "2026-03-09T14:30:00",
+    "documentation": "/swagger-ui/index.html",
+    "author": "Studios TKOH!"
+  },
+  "timestamp": "2026-03-09T14:30:00.000Z"
+}
+```
 
 ## Request Format
 
